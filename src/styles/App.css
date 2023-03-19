@@ -1,0 +1,15 @@
+.container {
+    width: 30%;
+    height: 300px;
+    border: 1px solid black;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 10px;
+    overflow-y: scroll;
+  }
+  
+  .item {
+    padding: 10px;
+    background-color: lightgray;
+    margin-bottom: 10px;
+  }
