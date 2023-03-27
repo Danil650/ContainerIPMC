@@ -1,4 +1,6 @@
 export default interface Substance {
-    Id: number;
-    ContName: string;
+    Id: string;
+    ExcelId?: number;
+    ContainsIn?: number | null;
+    Name: string;
 }
