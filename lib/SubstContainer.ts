@@ -1,5 +1,5 @@
 export default interface Substance {
-    Id: number;
-    SubstId: number;
-    ContId: number;
+    Id: string;
+    SubstId: string;
+    ContId: string;
 }

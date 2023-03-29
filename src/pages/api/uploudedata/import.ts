@@ -5,63 +5,109 @@ import Substance from "../../../../lib/Substance"
 import SubstCont from "../../../../lib/SubstContainer"
 import { query } from '../../../../lib/db'
 import uuid from 'react-uuid';
-import { from } from "linq-to-typescript"
+import { from } from 'linq-to-typescript'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
-
         const data = req.body as ExcelData[];
-        let Content: Container[] = [];
-        let uplouded: Container[] = [];
-        //часть кода отвечающая за родительские контейнера
-        data.forEach(element => {
-            if (element.ContainsIn == 0 && element.Container) {
-                let id = uuid();
-                let elem: Container =
-                {
-                    Id: id,
-                    ExcelId: element.Id,
-                    Name: element.Container
-                };
-                Content.push(elem);
-            }
-        });
-        try {
-            Content.forEach(async element => {
-                {
-                    if (!uplouded.some(x=>x.ExcelId === element.ExcelId))
-                    {
-                        if (element.ExcelId) {
-                            uplouded.push(element);
-                            await query("INSERT INTO containerdb.contwthcont (Id, ExcelId, Name) VALUES (?, ? , ?);", [element.Id, element.ExcelId.toString(), element.Name]);
-                        }
-                    }        
-                }
-            });
-        } catch (e) {
-            if (e instanceof Error) {
-                res.status(500).json({ message: e.message });
-                return;
-            }
+        if (data[0].CAS === "CAS" && data[0].Container === "Коробка" &&
+            data[0].Formula === "Формула" && data[0].Title === "Название") {
+            data.shift();
         }
-        //конец 
-
-        //Добавление дочерних объектов
-        data.forEach(element => {
-            if (element.ContainsIn != 0 && element.Container) {
-                let id = uuid();
-                let elem: Container =
-                {
-                    Id: id,
+        else {
+            res.status(405).json({ message: "Не верный формат EXCEL" });
+            return;
+        }
+        let Containers: Container[] = [];
+        let uplouded: Container;
+        let Substance: Substance[] = [];
+        let SubstCont: SubstCont[] = [];
+        data.forEach(async element => {
+            if (element.Id != 0 && element.Container) {
+                let cont: Container = {
+                    Id: `${element.Id}${element.Container}`,
                     ExcelId: element.Id,
+                    ContainsIn: element.ContainsIn,
                     Name: element.Container
-                };
-                Content.push(elem);
+                }
+                Containers.push(cont);
+            }
+            if (element.Title) {
+                let subst: Substance = {
+                    Id: uuid(),
+                    SubstName: element.Title,
+                    Left: '1',
+                    Investigated: '1',
+                    CAS: element.CAS,
+                    Meaning: element.Meaning,
+                    Mass: element.Mass,
+                    Formula: element.Formula,
+                    URL: element.URL
+                }
+                Substance.push(subst);
+
+                let substcont: SubstCont = {
+                    Id: uuid(),
+                    ContId: from(Containers).where(x => x.ExcelId == element.Id).select(x => x.Id).first(),
+                    SubstId: subst.Id
+                }
+                SubstCont.push(substcont);
+                try {
+                    await query("INSERT INTO containerdb.substance (Id, SubstName, CAS, Meaning, Mass, Formula, Investigated, `Left`, URL) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+                        [subst.Id, subst.SubstName as string, subst.CAS as string, subst.Meaning as string, subst.Mass as string, subst.Formula as string, subst.Investigated, subst.Left, subst.URL as string]);
+                } catch (error) {
+                    console.log(error);
+                }
+
             }
         });
-        res.status(200).json({ message: "Ok" });
-    } else {
-        res.status(405).json({ message: "Method not allowed" });
+        //добавление контейнеров без повторений
+        Containers.forEach(async element => {
+            if (uplouded) {
+                if (uplouded.ExcelId == element.ExcelId &&
+                    uplouded.ContainsIn == element.ContainsIn &&
+                    uplouded.Name == element.Name) {
+                    uplouded = element;
+                }
+                else {
+                    uplouded = element;
+                    if(element.ExcelId)
+                     try {
+                    await query("INSERT INTO containerdb.contwthcont (Id, ExcelId, ContainsIn, Name) VALUES"+
+                     "(?, ?, ?, ?);",
+                        [element.Id, element.ExcelId, from(Containers).where(x=>x.ExcelId == element.ContainsIn).select(x=>x.Id).firstOrDefault() ?? '' , element.Name]);
+                } catch (error) {
+                    console.log(error);
+                }
+                }
+            }
+            else {
+                uplouded = element;
+                try {
+                    await query("INSERT INTO containerdb.contwthcont (Id, ExcelId, ContainsIn, Name) VALUES"+
+                     "(?, ?, ?, ?);",
+                        [element.Id, element.ExcelId ?? 0, element.ContainsIn ?? '' , element.Name]);
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        });
+         SubstCont.forEach(async element => {
+            try {
+                await query("INSERT INTO containerdb.substcont (Id, SubstId, ContId) VALUES (?, ?, ?); ",
+                    [element.Id,element.SubstId,element.ContId ]);
+            } catch (error) {
+                console.log(`INSERT INTO containerdb.substcont (Id, SubstId, ContId) VALUES (${element.Id}, ${element.SubstId}, ${element.ContId}); `)
+                console.log(error);
+                console.log(element.Id,element.SubstId,element.ContId )
+                console.log(from(Substance).where(x=>x.Id == element.SubstId).toArray());
+            }
+        });
+        res.status(200).json({ message: "Данные импортированы" });
+    }
+    else {
+        res.status(405).json({ message: "Метод не позволителен" });
         return;
     }
 }

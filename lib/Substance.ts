@@ -1,5 +1,5 @@
 export default interface Substance {
-    Id: number,
+    Id: string,
     SubstName?: string,
     CAS?: string,
     Meaning?: string,
