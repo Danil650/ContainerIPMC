@@ -15,7 +15,7 @@ import { from } from 'linq-to-typescript'
 })
 let uplouded: Container;
 
-async function query(
+export async function query(
   q: string,
   values: (string | number)[] | string | number = []
 ) {
@@ -32,7 +32,7 @@ async function query(
   }
 }
 
-export async function insertSubstances(
+export async function InsertSubstances(
   Substances: Substance[],
   Containers : Container[],
   SubstCont : SubstCont[]
@@ -95,4 +95,8 @@ export async function insertSubstances(
       throw Error(e.message); // works, `e` narrowed to Error
     }
   }
+}
+
+export async function GetContainers() {
+  
 }

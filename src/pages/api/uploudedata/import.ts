@@ -3,7 +3,7 @@ import ExcelData from "../../../../lib/ExcelData"
 import Container from "../../../../lib/Container"
 import Substance from "../../../../lib/Substance"
 import SubstCont from "../../../../lib/SubstContainer"
-import { insertSubstances } from '../../../../lib/db'
+import { InsertSubstances } from '../../../../lib/db'
 import uuid from 'react-uuid';
 import { from } from 'linq-to-typescript'
 
@@ -54,7 +54,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             }
         });
 
-        insertSubstances(Substance,Containers,SubstCont);
+        InsertSubstances(Substance,Containers,SubstCont);
 
         //добавление контейнеров без повторений
          
