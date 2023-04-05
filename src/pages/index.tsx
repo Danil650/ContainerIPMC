@@ -1,14 +1,49 @@
 import { useEffect, useState } from "react";
 import styles from '@/styles/Home.module.css'
 import Head from "next/head";
-import { Container } from "react-dom";
+import Container from "lib/Container";
+import Substance from "lib/Substance";
+import {from} from "linq-to-typescript"
 
 function Home() {
-    let [ContainersPar, setContainersP] = useState<Container[]>();
 
-    useEffect(()=>{
+    interface LoudData {
+        Id: string;
+        ExcelId: number;
+        ContainsIn?: number;
+        Name: string;
+        SubstId: Substance[];
+        LoudData: Container[];
+    }
 
-    },[])
+    function BuildChildrens(data : any, Id : string)
+    {
+        if(data && data.length > 0)
+        {
+            for (let index = 0; index < data.length; index++) {
+                const element : Container = data[index];
+                let LoudDataNew : LoudData[] = ContainersPar ?? [];
+                
+            }
+        }
+
+    }
+
+    function OpenClickHandler(Id: string) {
+        console.log(Id);
+        fetch(`http://localhost:3000/api/Cont/${Id}`)
+            .then(res => res.json())
+            .then(data => BuildChildrens(data,Id));
+    }
+
+    let [ContainersPar, setContainers] = useState<LoudData[]>();
+
+    useEffect(() => {
+        fetch("http://localhost:3000/api/parrentcontainers")
+            .then(res => res.json())
+            .then(data => setContainers(data));
+    }, [])
+
     return (
         <>
             <Head>
@@ -21,8 +56,20 @@ function Home() {
                 <button>Импорт</button>
             </nav>
             <main className={styles.mainBox}>
-                <div>
-
+                <div className={styles.substContFree}>
+                    Text
+                </div>
+                <div className={styles.contMain}>
+                    {
+                        ContainersPar?.map((item) => {
+                            return (
+                                <div key={item.Id} className={styles.containerDiv}>
+                                    <button onClick={() => OpenClickHandler(item.Id)}>&gt;</button>
+                                    <h1>{item.Name}</h1>
+                                </div>
+                            );
+                        })
+                    }
                 </div>
             </main>
         </>
@@ -31,14 +78,11 @@ function Home() {
 
 export default Home;
 
-function fillContainers(Id : string)
-{
-    if(Id)
-    {
+function fillContainers(Id: string) {
+    if (Id) {
 
     }
-    else
-    {
-        
+    else {
+
     }
 }

@@ -1,5 +1,4 @@
 .menuBox {
-  background-color:#7acca2;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -12,7 +11,41 @@
 {
   margin: 0;
   padding: 0;
-  height: 100vh;
+  height: max-content;
   width: 100vw;
   background-color: #47ad9f;
+  display: flex;
+  justify-content:space-around;
+
+}
+
+.mainBox div
+{
+  border: solid;
+  margin: 10px;
+  height: max-content;
+
+}
+
+.substContFree
+{
+  width: 30vw;
+  border: solid;
+  padding: 10px;
+}
+
+.contMain
+{
+  width: 70vw;
+  border: solid;
+  padding: 10px;
+  height: max-content;
+}
+
+.containerDiv
+{
+  width:auto;
+  background-color: aquamarine;
+  display: flex;
+  padding-right: 5px;
 }
