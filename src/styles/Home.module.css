@@ -7,6 +7,9 @@
   width: 100vw;
   padding: 5px;
 }
+.menuBox button {
+  background-color: #f8feaf;
+}
 .mainBox
 {
   margin: 0;
@@ -24,7 +27,7 @@
   border: solid;
   margin: 10px;
   height: max-content;
-
+  background-color: #079199;
 }
 
 .substContFree

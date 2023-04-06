@@ -8,16 +8,21 @@ const handler: NextApiHandler = async (req, res) => {
         if (id) {
             //Поиск вещества по id
             const results = await query(
-                `select * from contwthcont where ContainsIn = ?;`,
-                [id.toString()]
+                `SELECT * FROM 
+            containerdb.substance
+            Where id = ? ;`, [id.toString()]
+            ) as ISubstance[];
 
-            );
-            res.json(results);
+            if (results.length > 0) {
+                return res.json(results);
+            } else {
+                res.status(404).send('Substances not found');
+            }
         }
-        res.status(500);
     } catch (e) {
         if (e instanceof Error)
             res.status(500).json({ message: e.message });
     }
 }
+
 export default handler

@@ -3,45 +3,36 @@ import styles from '@/styles/Home.module.css'
 import Head from "next/head";
 import Container from "lib/Container";
 import Substance from "lib/Substance";
-import {from} from "linq-to-typescript"
+import { from } from "linq-to-typescript"
 
 function Home() {
-
-    interface LoudData {
-        Id: string;
-        ExcelId: number;
-        ContainsIn?: number;
-        Name: string;
-        SubstId: Substance[];
-        LoudData: Container[];
+    //Показываемые контейнеры
+    let [ContList, setContList] = useState<Container[]>([]);
+    //вещества открытого контейнера
+    let [SubstList, setSubstList] = useState<Substance[]>([]);
+    //история посещения контейнера
+    let [HistoryCont, setSubstHist] = useState<Container[]>([]);
+    function BuildChildrens(data: Container[], Id: string) {
+        let NewLoudData: Container;
+        let Conts: Container[] = data;
+        NewLoudData = from(ContList).where(x => x.Id === Id).first() as Container;
+        setSubstHist(prevHistoryCont => prevHistoryCont.concat(NewLoudData));
+        Conts = Conts.filter(x => x.Id !== Id);
+        setContList(Conts);
+        console.log(HistoryCont);
     }
 
-    function BuildChildrens(data : any, Id : string)
-    {
-        if(data && data.length > 0)
-        {
-            for (let index = 0; index < data.length; index++) {
-                const element : Container = data[index];
-                let LoudDataNew : LoudData[] = ContainersPar ?? [];
-                
-            }
-        }
-
-    }
-
-    function OpenClickHandler(Id: string) {
+    async function OpenClickHandler(Id: string) {
         console.log(Id);
-        fetch(`http://localhost:3000/api/Cont/${Id}`)
-            .then(res => res.json())
-            .then(data => BuildChildrens(data,Id));
+        const response = await fetch(`http://localhost:3000/api/Cont/${Id}`);
+        const data = await response.json();
+        BuildChildrens(data, Id);
     }
-
-    let [ContainersPar, setContainers] = useState<LoudData[]>();
 
     useEffect(() => {
         fetch("http://localhost:3000/api/parrentcontainers")
-            .then(res => res.json())
-            .then(data => setContainers(data));
+            .then(async res => await res.json())
+            .then(data => setContList(data));
     }, [])
 
     return (
@@ -55,13 +46,17 @@ function Home() {
             <nav className={styles.menuBox}>
                 <button>Импорт</button>
             </nav>
+            <div className={styles.menuBox}>
+                <button>Назад</button>
+            </div>
             <main className={styles.mainBox}>
                 <div className={styles.substContFree}>
                     Text
                 </div>
                 <div className={styles.contMain}>
                     {
-                        ContainersPar?.map((item) => {
+                        ContList?.map((item) => {
+
                             return (
                                 <div key={item.Id} className={styles.containerDiv}>
                                     <button onClick={() => OpenClickHandler(item.Id)}>&gt;</button>
@@ -77,12 +72,3 @@ function Home() {
 }
 
 export default Home;
-
-function fillContainers(Id: string) {
-    if (Id) {
-
-    }
-    else {
-
-    }
-}
