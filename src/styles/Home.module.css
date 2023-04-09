@@ -1,14 +1,13 @@
 .menuBox {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
   min-height: 15%;
-  width: 100vw;
   padding: 5px;
+  align-items: center;
+  justify-content: space-around;
 }
 .menuBox button {
   background-color: #f8feaf;
+  font-size: large;
 }
 .mainBox
 {
@@ -24,6 +23,8 @@
 
 .mainBox div
 {
+  display: flex;
+  flex-direction: column;
   border: solid;
   margin: 10px;
   height: max-content;
@@ -51,4 +52,33 @@
   background-color: aquamarine;
   display: flex;
   padding-right: 5px;
+}
+
+.edit{
+  margin-top: 20%;
+}
+
+.edit div {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  margin-top: 10px;
+  flex-direction: column;
+}
+
+.edit button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  margin-left: 50%;
+  margin-top: 10px;
+}
+
+.edit label {
+  margin-right: 10px;
+}
+
+.edit input {
+  margin-right: 10px;
 }
