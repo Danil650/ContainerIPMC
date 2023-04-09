@@ -6,6 +6,7 @@ const handler: NextApiHandler = async (req, res) => {
     try {
         const { id } = req.query;
         if (id) {
+            
             //Поиск вещества по id
             const results = await query(
                 `WITH RECURSIVE tree_path (Id, path) AS (

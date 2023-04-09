@@ -112,19 +112,26 @@ function Home() {
         setSubstInCont([]);
     }
 
+    function ClearCookies()
+    {
+        Cookies.remove("user");
+        router.push("/login");
+    }
+
     async function GoBack() {
         SetLocation("");
         const response = await fetch("http://localhost:3000/api/parrentcontainers")
         const data = await response.json();
         await setContList(data);
         SetLocation("");
+        setSubstHist([]);
         setSubstInCont([]);
     }
     useEffect(() => {
-        // if(!Cookies.get("user"))
-        // {
-        //     router.push("/login");
-        // }
+        if(!Cookies.get("user"))
+        {
+            router.push("/login");
+        }
         fetch("http://localhost:3000/api/parrentcontainers")
             .then(async res => await res.json())
             .then(data => setContList(data));
@@ -149,6 +156,7 @@ function Home() {
                 <button onClick={() => GoBack()}>Вернуться</button>
                 <button onClick={()=> router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
                 <button onClick={()=> router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
+                <button onClick={()=>ClearCookies()}>Выход</button>
             </nav>
             {
                 SubstInCont && SubstInCont.length > 0 ? (

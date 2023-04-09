@@ -23,6 +23,12 @@ function Home() {
 
             //Проверка на содержание столбцов
             //есть ли столбцы ваобще
+            if(data.length == 0)
+            {
+                alert("Файл пустой");
+                return;
+            }
+
             meanings.push(from(data).select(x => x[1]).first());
             meanings.push(from(data).select(x => x[2]).first());
             meanings.push(from(data).select(x => x[3]).first());

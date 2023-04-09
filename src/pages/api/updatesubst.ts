@@ -6,6 +6,7 @@ import SubstCont from "../../../lib/SubstContainer"
 import uuid from 'react-uuid';
 import { from } from 'linq-to-typescript'
 import { query } from "lib/db";
+import Cookies from "js-cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
@@ -34,6 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             else {
                 try {
+
+
                     const results = await query(
                         `INSERT INTO containerdb.substance
                         (Id,
@@ -59,8 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     res.status(200).json({ success: true, data: results });
                 } catch (error) {
                     console.error(error);
-                    if(error instanceof Error)
-                    res.status(500).json({ message: error.message })
+                    if (error instanceof Error)
+                        res.status(500).json({ message: error.message })
                 }
             }
 
