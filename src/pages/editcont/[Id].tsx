@@ -136,9 +136,6 @@ const App = () => {
                 }
             </div>
             <button onClick={EditCont}>Сохранить</button>
-            {
-                IsEdit ? (<button onClick={DelFromCont}>удалить</button>) : <></>
-            }
         </div>
     )
 
