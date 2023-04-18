@@ -5,14 +5,14 @@ import User from "../../lib/User";
 import uuid from 'react-uuid';
 import React from 'react';
 import Cookies from 'js-cookie';
+import Head from 'next/head';
 
 const App = () => {
     let router = useRouter();
     let [Log, setLog] = useState("");
     let [Pswrd, setPswrd] = useState("");
     function EnterUser() {
-        if(Log.trim().length > 0 && Pswrd.trim().length > 0)
-        {
+        if (Log.trim().length > 0 && Pswrd.trim().length > 0) {
             let User: User =
             {
                 IdUsers: "0",
@@ -27,17 +27,25 @@ const App = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(User),
-            }).then((res) => {
-                if (res.ok) {
-                    Cookies.set("user",Log);
+            })
+                .then((res) => {
+                    if (res.ok) {
+                        return res.json(); // вызов метода .json() и возврат промиса с результатом
+                    } else {
+                        alert("Пользователь не найден");
+                        return;
+                    }
+                })
+                .then((data) => {
+                    // здесь можно использовать данные в формате JSON
+                    Cookies.set("user", data);
                     router.push('/');
-                } else {
-                    alert("нет такого пользователя");
-                }
-            });
+                })
+                .catch((error) => {
+                    console.error("Ошибка получения данных: ", error);
+                });
         }
-        else
-        {
+        else {
             alert("Заполните все строки");
         }
     }
@@ -58,20 +66,28 @@ const App = () => {
         }
     }
     return (
-        <div className={styles.edit}>
-            <div>
-                <label>
-                    Логин:
-                    <input type="text" name="Login" onChange={handleChange} />
-                </label>
-                <label>
-                    Пароль:
-                    <input type="password" name="Password" onChange={handleChange} />
-                </label>
-            </div>
-            <button onClick={() => EnterUser()}>Войти</button>
+        <>
+            <Head>
+                <title>Авторизация</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
+            <div className={styles.edit}>
+                <div>
+                    <label>
+                        Логин:
+                        <input type="text" name="Login" onChange={handleChange} />
+                    </label>
+                    <label>
+                        Пароль:
+                        <input type="password" name="Password" onChange={handleChange} />
+                    </label>
+                </div>
+                <button onClick={() => EnterUser()}>Войти</button>
 
-        </div>
+            </div>
+        </>
+
     )
 
 }

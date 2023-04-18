@@ -1,22 +1,20 @@
 import { NextApiHandler } from 'next'
 import { query } from '../../../../lib/db'
-import ISubstance from "../../../../lib/Substance"
 
 const handler: NextApiHandler = async (req, res) => {
     try {
-        const { id } = req.query;
-        if (id) {
+        const { Id } = req.query;
+        if (Id) {
             //Поиск вещества по id
             const results = await query(
-                `SELECT  *, COUNT(*) AS ContQauntIn
-                FROM contwthcont
-                WHERE Id = ?
-                GROUP BY ContainsIn;`,
-                [id.toString()]
+                `SELECT substance.* FROM substance join substcont 
+                on substance.Id = substcont.SubstId where substcont.SubstId = ?;`, [Id.toString()]
             );
-           return res.json(results);
+            return res.status(200).json(results);
         }
-        res.status(500);
+        else {
+            return res.status(300);
+        }
     } catch (e) {
         if (e instanceof Error)
             res.status(500).json({ message: e.message });

@@ -4,17 +4,13 @@
   padding: 5px;
   align-items: center;
   justify-content: space-around;
-}
-.menuBox button {
-  background-color: #f8feaf;
-  font-size: large;
+  border: solid;
 }
 .mainBox
 {
   margin: 0;
   padding: 0;
   height: max-content;
-  width: 100vw;
   background-color: #47ad9f;
   display: flex;
   justify-content:space-around;
@@ -82,3 +78,25 @@
 .edit input {
   margin-right: 10px;
 }
+
+.searchPanel{
+    /* margin: 5px; */
+    display: flex;
+    font-size: 20px;
+    background: #7ccba2;
+    border: solid, #b7e6a6;
+    /* border-width: 2px 10px; */
+    border-style: inset;
+    border-color: #b7e6a6;
+    border-width: 5px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+}
+
+.searchPanel div{
+  margin: 5px;
+  font-size: 20px;
+  align-content: center;
+  justify-content: end;
+}
+

@@ -5,7 +5,7 @@ import Container from '../lib/Container'
 import SubstCont from '../lib/SubstContainer'
 import { from } from 'linq-to-typescript'
 
-const db = mysql({
+export const db = mysql({
   config: {
     host: process.env.MYSQL_HOST,
     database: process.env.MYSQL_DATABASE,

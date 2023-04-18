@@ -2,4 +2,11 @@ body
 {
     margin: 0;
     background-color:#47ada1;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+button{
+    background-color: #f8feaf;
+    font-size: large;
+    margin: 5px;
 }

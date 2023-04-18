@@ -2,11 +2,11 @@ import Substance from "../../../lib/Substance"
 import { useRouter } from 'next/router';
 import { useEffect, useState } from "react";
 import styles from '../../styles/Home.module.css';
-import jsCookie from 'js-cookie'
+import Cookies from "js-cookie";
 
 const App = () => {
 
- 
+
 
     const router = useRouter()
     const { Id } = router.query // получаем id из параметров маршрута
@@ -21,10 +21,32 @@ const App = () => {
     let [Left, setLeft] = useState(false)
     let [URL, setURL] = useState("")
     let [IsEdit, setEdit] = useState(false);
-
+    let [CanDel, setDel] = useState(false);
+    useEffect(() => {
+        if (!Cookies.get("user")) {
+            router.push("/login");
+        }
+        else {
+            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+                .then(async res => await res.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        router.push("/login");
+                        Cookies.remove("user");
+                    }
+                });
+        }
+    }, []);
     useEffect(() => {
         if (Id) {
             if (Id != "AddSubst") {
+                fetch(`http://localhost:3000/api/substincontbyid/${Id}`)
+                .then(async res => await res.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        setDel(true);
+                    }
+                });
                 fetch(`http://localhost:3000/api/substbyid/${Id}`).then((response) => response.json().then((data) => {
                     setSubstId(data[0].Id);
                     setSubstToEdit(data[0]);
@@ -82,7 +104,12 @@ const App = () => {
     async function EditSubst() {
         // Обработка сохранения данных
         if (Id && SubstName.trim().length != 0) {
+            interface SendDate {
+                Subst: Substance,
+                user: string
+            }
             if (IsEdit) {
+
                 let newSubst: Substance = {
                     Id: SubstId,
                     SubstName: SubstName,
@@ -94,12 +121,16 @@ const App = () => {
                     Left: String(Number(Left)),
                     URL: URL,
                 }
+                let SndDate: SendDate = {
+                    Subst: newSubst,
+                    user: Cookies.get("user") ?? ""
+                }
                 fetch("http://localhost:3000/api/updatesubst", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(newSubst),
+                    body: JSON.stringify(SndDate),
                 }).then((res) => {
                     if (res.ok) {
                         router.push('/');
@@ -120,12 +151,16 @@ const App = () => {
                     Left: String(Number(Left)),
                     URL: URL,
                 }
+                let SndDate: SendDate = {
+                    Subst: newSubst,
+                    user: Cookies.get("user") ?? ""
+                }
                 fetch("http://localhost:3000/api/updatesubst", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(newSubst),
+                    body: JSON.stringify(SndDate),
                 }).then((res) => {
                     if (res.ok) {
                         router.push('/');
@@ -142,8 +177,22 @@ const App = () => {
         }
     }
     function DelFromCont() {
+        interface SndDate {
+            del:string,
+            user:string
+        }
+        let SndDate : SndDate = {
+            del: SubstId,
+            user: Cookies.get("user") ?? ""
+        }
         if (confirm(`Хотите удалить ${SubstName} из контейнера?`)) {
-            fetch(`http://localhost:3000/api/delsubstfromcont/${SubstId}`).then(
+            fetch("http://localhost:3000/api/delsubstfromcont", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(SndDate),
+            }).then(
                 () => router.push('/')
             )
         }
@@ -172,7 +221,7 @@ const App = () => {
             <div>
                 <label>
                     Масса:
-                    <input type="text" name="Mass" checked={Mass === '1'} onChange={handleChange} />
+                    <input type="text" name="Mass" defaultValue={Mass} onChange={handleChange} />
                 </label>
             </div>
             <div>
@@ -199,9 +248,9 @@ const App = () => {
                     <input type="text" name="URL" defaultValue={URL} onChange={handleChange} />
                 </label>
             </div>
-            <button onClick={EditSubst}>Сохранить</button>
+            <button  onClick={EditSubst}>Сохранить</button>
             {
-                IsEdit ? (<button onClick={DelFromCont}>Удалить из контейнера</button>) : <></>
+                IsEdit ? (<button disabled={CanDel} onClick={DelFromCont}>Удалить из контейнера</button>) : <></>
             }
         </div>
     )

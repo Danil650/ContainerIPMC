@@ -8,7 +8,11 @@ const handler: NextApiHandler = async (req, res) => {
         if (id) {
             //Поиск вещества по id
             const results = await query(
-                `select * from contwthcont where ContainsIn = ?;`,
+                `SELECT c.*, COUNT(c2.ContainsIn) AS ContQauntIn
+                FROM containerdb.contwthcont c
+                LEFT JOIN containerdb.contwthcont c2 ON c.Id = c2.ContainsIn
+                WHERE c.ContainsIn = ?
+                GROUP BY c.Id`,
                 [id.toString()]
             );
             res.json(results);

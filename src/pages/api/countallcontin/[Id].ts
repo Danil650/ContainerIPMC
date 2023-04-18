@@ -8,10 +8,17 @@ const handler: NextApiHandler = async (req, res) => {
         if (id) {
             //Поиск вещества по id
             const results = await query(
-                `SELECT  *, COUNT(*) AS ContQauntIn
-                FROM contwthcont
-                WHERE Id = ?
-                GROUP BY ContainsIn;`,
+                `WITH RECURSIVE container_tree AS (
+                    SELECT Id, ContainsIn
+                    FROM contwthcont
+                    WHERE Id = ?
+                    UNION ALL
+                    SELECT c.Id, c.ContainsIn
+                    FROM contwthcont c
+                    JOIN container_tree ct ON c.ContainsIn = ct.Id
+                  )
+                  SELECT COUNT(*) - 1 AS total_containers
+                  FROM container_tree;`,
                 [id.toString()]
             );
            return res.json(results);
@@ -23,3 +30,6 @@ const handler: NextApiHandler = async (req, res) => {
     }
 }
 export default handler
+
+
+

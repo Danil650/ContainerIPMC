@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styles from '../../styles/Home.module.css';
 import Container from 'lib/Container';
 import uuid from 'react-uuid';
+import Cookies from 'js-cookie';
 
 const App = () => {
 
@@ -14,14 +15,28 @@ const App = () => {
     let [ContsInList, setContsInList] = useState<Container[]>([]);
     let [ContInSelect, setContInSelect] = useState("");
     useEffect(() => {
+        if (!Cookies.get("user")) {
+            router.push("/login");
+        }
+        else {
+            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+                .then(async res => await res.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        router.push("/login");
+                        Cookies.remove("user");
+                    }
+                });
+        }
+    }, []);
+    useEffect(() => {
         if (Id) {
             if (Id != "AddCotainer") {
-
-                fetch(`http://localhost:3000/api/contid/${Id}`).then((response) => response.json().then((data) => {
+                fetch(`http://localhost:3000/api/contid/${Id}`).then((response) => response.json()).then((data) => {
                     setContId(data[0].Id);
                     setContName(data[0].Name);
                     setEdit(true);
-                }));
+                });
             }
             else {
                 buildConts();
@@ -52,6 +67,10 @@ const App = () => {
 
     async function EditCont() {
         // Обработка сохранения данных
+        interface SendData {
+            cont: Container,
+            user:string
+        }
         if (Id && ContName.trim().length != 0) {
             if (IsEdit) {
                 let newCont: Container = {
@@ -59,12 +78,17 @@ const App = () => {
                     ExcelId: 0,
                     Name: ContName,
                 }
+                let sndData : SendData = {
+                    cont: newCont,
+                    user: Cookies.get("user") ?? ""
+                };
+
                 fetch("http://localhost:3000/api/updatecont", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(newCont),
+                    body: JSON.stringify(sndData),
                 }).then((res) => {
                     if (res.ok) {
                         router.push('/');
@@ -81,12 +105,16 @@ const App = () => {
                     Name: ContName,
                     ContainsIn: ContInSelect
                 }
+                let sndData : SendData = {
+                    cont: newCont,
+                    user: Cookies.get("user") ?? ""
+                };
                 fetch("http://localhost:3000/api/updatecont", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(newCont),
+                    body: JSON.stringify(sndData),
                 }).then((res) => {
                     if (res.ok) {
                         router.push('/');

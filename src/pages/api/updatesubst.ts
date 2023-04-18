@@ -1,19 +1,21 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import ExcelData from "../../../lib/ExcelData"
-import Container from "../../../lib/Container"
 import Substance from "../../../lib/Substance"
-import SubstCont from "../../../lib/SubstContainer"
 import uuid from 'react-uuid';
-import { from } from 'linq-to-typescript'
 import { query } from "lib/db";
-import Cookies from "js-cookie";
+import { json } from "stream/consumers";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
-        const data = req.body as Substance;
-        if (data.SubstName && data.SubstName != "") {
-            if (data.Id != "0") {
+        interface SendDate {
+            Subst: Substance,
+            user:string
+        }
+        const data = req.body as SendDate;
+        
+        if (data.Subst.SubstName && data.Subst.SubstName != "") {
+            if (data.Subst.Id != "0") {
                 try {
+                    let subst = await query("SELECT * FROM containerdb.substance where Id = ?;",data.Subst.Id) as string;
                     const results = await query(
                         `UPDATE containerdb.substance
                           SET
@@ -25,9 +27,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                           Investigated = ?,
                           \`Left\` = ?,
                           URL = ?
-                          WHERE Id = ?;`, [data.SubstName, data.CAS ?? "", data.Meaning ?? "", data.Mass ?? "", data.Formula ?? "", data.Investigated, data.Left, data.URL ?? "", data.Id]
-                    )
-                    res.status(200).json({ success: true, data: results });
+                          WHERE Id = ?;`, [data.Subst.SubstName, data.Subst.CAS ?? "", data.Subst.Meaning ?? "", data.Subst.Mass ?? "", data.Subst.Formula ?? "", data.Subst.Investigated, data.Subst.Left, data.Subst.URL ?? "", data.Subst.Id]
+                    ).then(()=>{
+                        query(`INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType)
+                        VALUES (?, 
+                        (SELECT users.IdUsers FROM users WHERE users.UserToken = ?),
+                        concat("изменил хим. вещество с ? на ?"),
+                        NOW(),
+                        2);`, [uuid(), data.user, subst[0],JSON.stringify(data.Subst)])
+                    })
+                    res.status(200).json({ success: true});
                 } catch (error) {
                     console.error(error);
                     res.status(500).json({ success: false, error: "Internal server error" });
@@ -35,30 +44,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             else {
                 try {
-
-
                     const results = await query(
-                        `INSERT INTO containerdb.substance
-                        (Id,
-                        SubstName,
-                        CAS,
-                        Meaning,
-                        Mass,
-                        Formula,
-                        Investigated,
-                        \`Left\`,
-                        URL)
-                        VALUES
-                        (?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?);`, [uuid(), data.SubstName, data.CAS ?? "", data.Meaning ?? "", data.Mass ?? "", data.Formula ?? "", data.Investigated, data.Left, data.URL ?? ""]
-                    )
+                        `INSERT INTO containerdb.substance (Id, SubstName, CAS, Meaning, Mass, Formula, Investigated, \`Left\`, URL)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`, [uuid(), data.Subst.SubstName, data.Subst.CAS ?? "", data.Subst.Meaning ?? "", data.Subst.Mass ?? "", data.Subst.Formula ?? "", data.Subst.Investigated, data.Subst.Left, data.Subst.URL ?? ""]
+                    ).then(()=>{
+                        query(`INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType)
+                        VALUES (?, 
+                        (SELECT users.IdUsers FROM users WHERE users.UserToken = ?),
+                        concat("добавил хим. вещество ?"),
+                        NOW(),
+                        1);`, [uuid(), data.user,JSON.stringify(data.Subst)])
+                    })
                     res.status(200).json({ success: true, data: results });
                 } catch (error) {
                     console.error(error);

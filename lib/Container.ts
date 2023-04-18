@@ -3,4 +3,6 @@ export default interface Container {
     ExcelId: number;
     ContainsIn?: number | string;
     Name: string;
+    ContQauntIn? : number;
+    SubstQauntIn? : number;
 }

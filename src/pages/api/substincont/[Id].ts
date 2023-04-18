@@ -18,5 +18,4 @@ const handler: NextApiHandler = async (req, res) => {
             res.status(500).json({ message: e.message });
     }
 }
-
 export default handler

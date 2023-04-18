@@ -1,33 +1,40 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import ExcelData from "../../../lib/ExcelData"
 import Container from "../../../lib/Container"
-import Substance from "../../../lib/Substance"
-import SubstCont from "../../../lib/SubstContainer"
 import uuid from 'react-uuid';
-import { from } from 'linq-to-typescript'
-import { query } from "lib/db";
-import Cookies from "js-cookie";
+import { db, query } from "lib/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
-        const data = req.body as Container;
+        interface SendData {
+            cont: Container,
+            user: string
+        }
+        const data = req.body as SendData;
         console.log(data);
-        if (data.Name && data.Name != "") {
-            if (data.Id != "0") {
+        if (data.cont.Name && data.cont.Name != "") {
+            if (data.cont.Id != "0") {
                 try {
-                    const results = await query(
-                        `UPDATE containerdb.contwthcont
-                        SET
-                        \`Name\` = ?
-                        WHERE Id = ?;`, [data.Name, data.Id]
-                    )
-                    res.status(200).json({ success: true, data: results });
+                    let OldCont = await query(`SELECT Name FROM containerdb.contwthcont where contwthcont.Id = ?;`, [data.cont.Id]) as string;
+                    await db.transaction().
+                        query(`UPDATE containerdb.contwthcont
+                    SET
+                    \`Name\` = ?
+                    WHERE Id = ?;`, [data.cont.Name, data.cont.Id]).commit().then(async () => await query(`INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType)
+                    VALUES (?, 
+                    (SELECT users.IdUsers FROM users WHERE users.UserToken = ?),
+                    concat("изменил контейнер с ? на контейнер " , (SELECT Name FROM contwthcont WHERE Id = ?)),
+                    NOW(),
+                    2);`, [uuid(), data.user, OldCont[0], data.cont.Id]))
+
+                    res.status(200).json({ success: true });
+
                 } catch (error) {
                     console.error(error);
                     res.status(500).json({ success: false, error: "Internal server error" });
                 }
             }
             else {
+                let IdToPut = uuid();
                 try {
                     const results = await query(
                         `INSERT INTO containerdb.contwthcont
@@ -39,8 +46,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         (?,
                         ?,
                         ?,
-                        ?);`, [uuid(), data.ExcelId, data.ContainsIn ?? "", data.Name]
+                        ?);`, [IdToPut, data.cont.ExcelId, data.cont.ContainsIn ?? "", data.cont.Name]
+
                     )
+
+                    //Запись в журнал
+                    await query(
+                        `INSERT INTO containerdb.substjournal
+                                    (idSubstJournal,
+                                    UserId,
+                                    \`Description\`,
+                                    DataChange,
+                                    ActionType)
+                                    VALUES
+                                    (?,
+                                    (select users.IdUsers from users where users.UserToken = ?),
+                                    "добавил контейнер с Id = ? и названием = ?",
+                                    NOW(),1);`, [uuid(), data.user, IdToPut, data.cont.Name]
+                    )
+
                     res.status(200).json({ success: true, data: results });
                 } catch (error) {
                     console.error(error);

@@ -2,9 +2,26 @@ import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelData from "../../lib/ExcelData"
 import { from } from "linq-to-typescript";
+import Cookies from "js-cookie";
+import router from "next/router";
 
 
 function Home() {
+    useEffect(() => {
+        if (!Cookies.get("user")) {
+            router.push("/login");
+        }
+        else {
+            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+                .then(async res => await res.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        router.push("/login");
+                        Cookies.remove("user");
+                    }
+                });
+        }
+    }, []);
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
