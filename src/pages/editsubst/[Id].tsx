@@ -176,7 +176,7 @@ const App = () => {
             alert("Заполните все поля");
         }
     }
-    function DelFromCont() {
+    async function DelFromCont() {
         interface SndDate {
             del:string,
             user:string
@@ -186,14 +186,13 @@ const App = () => {
             user: Cookies.get("user") ?? ""
         }
         if (confirm(`Хотите удалить ${SubstName} из контейнера?`)) {
-            fetch("http://localhost:3000/api/delsubstfromcont", {
+            await fetch("http://localhost:3000/api/delsubstfromcont", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(SndDate),
-            }).then(
-                () => router.push('/')
+            }).then(()=> router.push('/')
             )
         }
     }

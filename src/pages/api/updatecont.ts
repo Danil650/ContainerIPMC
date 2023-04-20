@@ -16,15 +16,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 try {
                     let OldCont = await query(`SELECT Name FROM containerdb.contwthcont where contwthcont.Id = ?;`, [data.cont.Id]) as string;
                     await db.transaction().
-                        query(`UPDATE containerdb.contwthcont
-                    SET
-                    \`Name\` = ?
-                    WHERE Id = ?;`, [data.cont.Name, data.cont.Id]).commit().then(async () => await query(`INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType)
-                    VALUES (?, 
-                    (SELECT users.IdUsers FROM users WHERE users.UserToken = ?),
-                    concat("изменил контейнер с ? на контейнер " , (SELECT Name FROM contwthcont WHERE Id = ?)),
-                    NOW(),
+                        query(`UPDATE containerdb.contwthcont SET \`Name\` = ? WHERE Id = ?;`, [data.cont.Name, data.cont.Id])
+                        .query(async () => await query(`INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType)
+                     VALUES (?,  (SELECT users.IdUsers FROM users WHERE users.UserToken = ?), concat("изменил контейнер с ? на контейнер " , (SELECT Name FROM contwthcont WHERE Id = ?)), NOW(),
                     2);`, [uuid(), data.user, OldCont[0], data.cont.Id]))
+                        .rollback((e: any) => { return res.status(300).send(e); })
+                        .commit();
 
                     res.status(200).json({ success: true });
 
@@ -36,36 +33,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             else {
                 let IdToPut = uuid();
                 try {
-                    const results = await query(
-                        `INSERT INTO containerdb.contwthcont
-                        (Id,
-                        ExcelId,
-                        ContainsIn,
-                        \`Name\`)
-                        VALUES
-                        (?,
-                        ?,
-                        ?,
-                        ?);`, [IdToPut, data.cont.ExcelId, data.cont.ContainsIn ?? "", data.cont.Name]
 
+                    db.transaction().query(
+                        `INSERT INTO containerdb.contwthcont (Id, ExcelId, ContainsIn, \`Name\`) 
+                        VALUES (?, ?, ?, ?);`, [IdToPut, data.cont.ExcelId, data.cont.ContainsIn ?? "", data.cont.Name]
                     )
-
-                    //Запись в журнал
-                    await query(
-                        `INSERT INTO containerdb.substjournal
-                                    (idSubstJournal,
-                                    UserId,
-                                    \`Description\`,
-                                    DataChange,
-                                    ActionType)
-                                    VALUES
-                                    (?,
-                                    (select users.IdUsers from users where users.UserToken = ?),
-                                    "добавил контейнер с Id = ? и названием = ?",
-                                    NOW(),1);`, [uuid(), data.user, IdToPut, data.cont.Name]
-                    )
-
-                    res.status(200).json({ success: true, data: results });
+                        .query(
+                            `INSERT INTO containerdb.substjournal (idSubstJournal, UserId, \`Description\`, DataChange, ActionType) 
+                            VALUES (?, (select users.IdUsers from users where users.UserToken = ?), "добавил контейнер с Id = ? и названием = ?", NOW(),1);`, [uuid(), data.user, IdToPut, data.cont.Name]
+                        )
+                        .rollback((e: any) => { return res.status(300).send(e); })
+                        .commit();
+                    res.status(200).json({ success: true });
                 } catch (error) {
                     console.error(error);
                     res.status(500).json({ success: false, error: "Internal server error" });
