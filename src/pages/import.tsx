@@ -4,6 +4,7 @@ import ExcelData from "../../lib/ExcelData"
 import { from } from "linq-to-typescript";
 import Cookies from "js-cookie";
 import router from "next/router";
+import styles from '@/styles/Home.module.css'
 
 
 function Home() {
@@ -98,7 +99,7 @@ function Home() {
     };
 
     return (
-        <div>
+        <div className={styles.import}>
             <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} />
         </div>
     );

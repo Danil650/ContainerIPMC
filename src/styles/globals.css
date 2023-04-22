@@ -10,3 +10,7 @@ button{
     font-size: large;
     margin: 5px;
 }
+
+button:hover{
+    background-color: #e0feaf;
+}

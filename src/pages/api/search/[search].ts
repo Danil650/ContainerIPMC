@@ -5,27 +5,12 @@ import Substance from 'lib/Substance';
 
 const handler: NextApiHandler = async (req, res) => {
     try {
-        interface SendData {
-            cont : Container[],
-            subst: Substance[]
-        }
-        const { search } = req.query;
+        let { search } = req.query;
         if (search) {
-            //Поиск вещества по id
-            let Cont;
-            const Subst = await query(
-                `SELECT * FROM containerdb.contwthcont where Name like "%?%";`,
-                [search.toString()]
-            ).then(async (Cont) => {
-                Cont = await query(
-                    `SELECT * FROM containerdb.contwthcont where Name like "%?%";`,
-                    [search.toString()])
-            });
-            let sndDate = {
-                Cont: Cont,
-                Subst : Subst
-            };
-            return res.json(sndDate);
+            let str = "%" + search + "%";
+            const cont = await query(`SELECT * FROM containerdb.contwthcont where Name like ?;`, [str.toString()]);
+            const subst = await query(`SELECT * FROM containerdb.substance inner join substcont on substance.Id = substcont.SubstId where SubstName like ?;`, [str.toString()]);
+            return res.json({cont,subst});
         }
         res.status(500);
     } catch (e) {

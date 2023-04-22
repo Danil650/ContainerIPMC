@@ -9,15 +9,17 @@ import { from } from "linq-to-typescript"
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie'
 import User from 'lib/User';
-
+import SubstCont from 'lib/SubstContainer';
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     let admin = false;
     const response = await fetch("http://localhost:3000/api/parrentcontainers");
-    let dataBd: Container = await response.json();
+    let cont: Container = await response.json();
+
     const response2 = await fetch("http://localhost:3000/api/substfree");
-    let dataBd2: Substance[] = await response2.json();
+    let subst: Substance[] = await response2.json();
     const lang = context.req.cookies['user'];
+
     const response3 = await fetch(`http://localhost:3000/api/checkuser/${lang}`);
     let user: User[] = await response3.json();
 
@@ -26,19 +28,17 @@ export async function getServerSideProps(context: { req: { cookies: { [x: string
     }
 
     return {
-        props: { dataBd, dataBd2, admin }, // will be passed to the page component as props
+        props: { cont, subst, admin }, // will be passed to the page component as props
     }
 }
+
 interface Props {
-    dataBd: Container[],
-    dataBd2: Substance[],
-    admin: boolean,
-}
-interface SendData {
     cont: Container[],
-    subst: Substance[]
+    subst: Substance[],
+    admin?: boolean,
 }
-export default function Home({ dataBd, dataBd2, admin }: Props) {
+export default function Home({ cont: dataBd, subst: dataBd2, admin }: Props) {
+    const router = useRouter();
     //Показываемые контейнеры
     let [ContList, setContList] = useState<Container[]>(dataBd);
     //вещества открытого контейнера
@@ -47,10 +47,23 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
     let [SubstInCont, setSubstInCont] = useState<Substance[]>([]);
     //история посещения контейнера
     let [HistoryCont, setSubstHist] = useState<Container[]>([]);
+
     let [Location, SetLocation] = useState<string>('');
+    //Поиск
+    const [searchTerm, setSearchTerm] = useState("");
+
+    let [SearchList, setSearchList] = useState<Props>();
+
+    const [showResults, setShowResults] = useState<boolean>();
+
+    function handleInputChange(event: any) {
+        setSearchTerm(event.target.value);
+    };
+
 
 
     useEffect(() => {
+        setShowResults(false);
         if (!Cookies.get("user")) {
             router.push("/login");
         }
@@ -66,7 +79,6 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
         }
     }, []);
 
-    const router = useRouter()
     const MaterialTable = () => {
         //should be memoized or stable
         const columns = useMemo<MRT_ColumnDef<Substance>[]>(
@@ -100,8 +112,20 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
         return <MaterialReactTable columns={columns} data={SubstInCont} />;
     };
 
-    function Search() {
+    async function Search() {
+        if (searchTerm.trim().length > 0) {
+            let res = await fetch(`http://localhost:3000/api/search/${searchTerm}`);
+            let date = await res.json();
+            setSearchList(date);
+            setShowResults(true);
+        }
 
+    }
+
+    async function OpenSubstPlace(Id: string) {
+        let res = await fetch(`http://localhost:3000/api/substbyidsearch/${Id}`);
+        let date = await res.json();
+        OpenClickHandler(date.ContId);
     }
 
     async function InsetToCont(Id: string) {
@@ -181,7 +205,6 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
         setSubstInCont([]);
     }
 
-
     function EditContainer(Id: string) {
         router.push(`/editcont/${encodeURIComponent(Id)}`)
     }
@@ -194,7 +217,6 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
             </Head>
             <nav className={styles.menuBox}>
                 <button onClick={() => router.push("/import/")}>Импорт</button>
-                <button onClick={() => GoBack()}>Вернуться</button>
                 <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
                 <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
                 {
@@ -203,20 +225,43 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
                 }
                 <button onClick={() => ClearCookies()}>Выход</button>
             </nav>
+
             <div className={styles.searchPanel}>
-                <div>
-                    <label htmlFor="header-search">
-                        <span className="visually-hidden">Поисковая строка</span>
-                    </label>
-                    <input
-                    onClick={()=>Search()}
-                        type="text"
-                        id="header-search"
-                        name="s"
-                    />
-                    <button>Поиск</button>
-                </div>
-                <label>Вы находитесь в "/"</label>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={() => setShowResults(true)}
+                />
+                <button onClick={() => Search()}>Поиск</button>
+                <button onClick={() => setShowResults(false)}>Скрыть</button>
+                {showResults && (
+                    <ul>
+                        {SearchList && SearchList.cont?.length > 0 ? (
+                            SearchList?.cont.map((item) => (
+                                <div key={item.Id}>
+                                    <li >Контейнер: {item.Name} {item.ContainsIn != "" ? (<u>/Находится в {item.ContainsIn}</u>) : <></>}</li>
+                                    <button onClick={() => OpenClickHandler(item.Id)}>&gt;</button>
+                                </div>
+                            ))
+                        ) : <></>}
+                        {SearchList && SearchList.subst?.length > 0 ? (
+                            SearchList?.subst.map((item) => (
+                                <div key={item.Id}>
+                                    <li>Хим. вещество: {item.SubstName}</li>
+                                    <button onClick={() => {
+                                        if(item.ContId)
+                                        {
+                                            OpenClickHandler(item.ContId);
+                                        }
+                                    }}>&gt;</button>
+                                </div>
+
+                            ))
+                        ) : <></>}
+                    </ul>
+                )}
+                {/* <label>Вы находитесь в "/"</label> */}
             </div>
             {
                 SubstInCont && SubstInCont.length > 0 ? (
@@ -229,7 +274,7 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
                     {SubstList && SubstList.length > 0 ? (
                         SubstList.map((item) => (
                             <div key={item.Id} className={styles.containerDiv}>
-                                <button onClick={() => InsetToCont(item.Id)}>Вставить</button>
+                                {HistoryCont && HistoryCont.length != 0 ? (<button onClick={() => InsetToCont(item.Id)}>Вставить</button>) : <></>}
                                 <h1>{item.SubstName ?? "NULL"}</h1>
                                 {item.CAS ?? "NULL"}
                                 <button onClick={() => { router.push(`editsubst/${encodeURIComponent(item.Id)}`) }}>
@@ -243,13 +288,14 @@ export default function Home({ dataBd, dataBd2, admin }: Props) {
                     )}
                 </div>
                 <div className={styles.contMain}>
+                    <button className={styles.backBtn} onClick={() => GoBack()}>Вернуться</button>
                     <h1>Список контейнеров</h1>
                     {ContList && ContList.length > 0 ?
                         (ContList?.map((item) => {
                             return (
                                 <div key={item.Id} className={styles.containerDiv}>
                                     <button onClick={() => OpenClickHandler(item.Id)}>Показать содержимое</button>
-                                    <h1>{item.Name ?? "NULL"}|содержит {item.ContQauntIn} контейнеров</h1>
+                                    <h1>{item.Name ?? "NULL"} <u>|содержит {item.ContQauntIn} контейнеров</u></h1>
                                     <button onClick={() => EditContainer(item.Id)}>Редактировать</button>
                                 </div>
                             );
