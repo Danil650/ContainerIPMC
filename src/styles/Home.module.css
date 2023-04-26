@@ -6,6 +6,10 @@
   justify-content: space-around;
   border: solid;
 }
+
+.menuBox img:hover{
+  cursor: pointer;
+}
 .mainBox
 {
   margin: 0;

@@ -5,4 +5,5 @@ export default interface Container {
     Name: string;
     ContQauntIn? : number;
     SubstQauntIn? : number;
+    SubstHave?: string,
 }

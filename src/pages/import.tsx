@@ -3,11 +3,49 @@ import * as XLSX from "xlsx";
 import ExcelData from "../../lib/ExcelData"
 import { from } from "linq-to-typescript";
 import Cookies from "js-cookie";
-import router from "next/router";
+import router, { useRouter } from "next/router";
 import styles from '@/styles/Home.module.css'
+import Image from 'next/image';
+import User from "lib/User";
 
+export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
+    let admin = false;
+    const lang = context.req.cookies['user'];
+    const response3 = await fetch(`http://localhost:3000/api/checkuser/${lang}`);
+    let user: User[] = await response3.json();
 
-function Home() {
+    if (user[0]?.RoleId == 1) {
+        admin = true;
+    }
+
+    return {
+        props: { admin }, // will be passed to the page component as props
+    }
+}
+interface Props {
+    admin?: boolean,
+}
+function App({ admin }: Props) {
+    const router = useRouter()
+    useEffect(() => {
+        if (!Cookies.get("user")) {
+            router.push("/login");
+        }
+        else {
+            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+                .then(async res => await res.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        router.push("/login");
+                        Cookies.remove("user");
+                    }
+                });
+        }
+    }, []);
+    function ClearCookies() {
+        Cookies.remove("user");
+        router.push("/login");
+    }
     useEffect(() => {
         if (!Cookies.get("user")) {
             router.push("/login");
@@ -41,8 +79,7 @@ function Home() {
 
             //Проверка на содержание столбцов
             //есть ли столбцы ваобще
-            if(data.length == 0)
-            {
+            if (data.length == 0) {
                 alert("Файл пустой");
                 return;
             }
@@ -99,10 +136,25 @@ function Home() {
     };
 
     return (
-        <div className={styles.import}>
-            <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} />
-        </div>
+        <>
+            <nav className={styles.menuBox}>
+                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => router.push("/")} />
+                <button onClick={() => router.push("/import/")}>Импорт</button>
+                <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
+                <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
+                {
+                    admin == true ? (<button>Управление пользователями</button>)
+                        : <></>
+                }
+                <button onClick={() => router.push(`/outputdata`)}>выходная информ-ия</button>
+                <button onClick={() => ClearCookies()}>Выход</button>
+            </nav>
+            <div className={styles.import}>
+                <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} />
+            </div>
+        </>
+
     );
 }
 
-export default Home;
+export default App;

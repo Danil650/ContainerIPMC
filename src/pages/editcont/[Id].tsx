@@ -4,9 +4,31 @@ import styles from '../../styles/Home.module.css';
 import Container from 'lib/Container';
 import uuid from 'react-uuid';
 import Cookies from 'js-cookie';
+import User from 'lib/User';
+import Image from 'next/image';
 
-const App = () => {
+export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
+    let admin = false;
+    const lang = context.req.cookies['user'];
+    const response3 = await fetch(`http://localhost:3000/api/checkuser/${lang}`);
+    let user: User[] = await response3.json();
 
+    if (user[0]?.RoleId == 1) {
+        admin = true;
+    }
+
+    return {
+        props: { admin }, // will be passed to the page component as props
+    }
+}
+interface Props {
+    admin?: boolean,
+}
+function App({ admin }: Props) {
+    function ClearCookies() {
+        Cookies.remove("user");
+        router.push("/login");
+    }
     const router = useRouter()
     const { Id } = router.query; // получаем id из параметров маршрута
     let [ContId, setContId] = useState<string>("");
@@ -69,7 +91,7 @@ const App = () => {
         // Обработка сохранения данных
         interface SendData {
             cont: Container,
-            user:string
+            user: string
         }
         if (Id && ContName.trim().length != 0) {
             if (IsEdit) {
@@ -78,7 +100,7 @@ const App = () => {
                     ExcelId: 0,
                     Name: ContName,
                 }
-                let sndData : SendData = {
+                let sndData: SendData = {
                     cont: newCont,
                     user: Cookies.get("user") ?? ""
                 };
@@ -105,7 +127,7 @@ const App = () => {
                     Name: ContName,
                     ContainsIn: ContInSelect
                 }
-                let sndData : SendData = {
+                let sndData: SendData = {
                     cont: newCont,
                     user: Cookies.get("user") ?? ""
                 };
@@ -137,34 +159,50 @@ const App = () => {
     }
 
     return (
-        <div className={styles.edit}>
-            <div>
-                <label>
-                    Название:
-                    <input type="text" name="ContName" defaultValue={ContName} onChange={handleChange} />
-                </label>
+        <>
+            <nav className={styles.menuBox}>
+                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => router.push("/")} />
+
+                <button onClick={() => router.push("/import/")}>Импорт</button>
+                <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
+                <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
                 {
-                    IsEdit ? (
-                        <></>
-                    ) : (
-                        <div>
-                            <select value={ContInSelect} onChange={(e) => setContInSelect(e.target.value)}>
-                                <option>Не содержится в контейнере</option>
-                                {
-                                    ContsInList?.map((item) => {
-                                        return (
-                                            <option key={item.Id} value={item.Id}>{item.Name}</option>
-                                        );
-                                    })
-                                }
-                            </select>
-                            <button onClick={() => console.log(ContInSelect)}>Выбрать</button>
-                        </div>
-                    )
+                    admin == true ? (<button>Управление пользователями</button>)
+                        : <></>
                 }
+                <button onClick={() => router.push(`/outputdata`)}>выходная информ-ия</button>
+                <button onClick={() => ClearCookies()}>Выход</button>
+            </nav>
+            <div className={styles.edit}>
+                <div>
+                    <label>
+                        Название:
+                        <input type="text" name="ContName" defaultValue={ContName} onChange={handleChange} />
+                    </label>
+                    {
+                        IsEdit ? (
+                            <></>
+                        ) : (
+                            <div>
+                                <select value={ContInSelect} onChange={(e) => setContInSelect(e.target.value)}>
+                                    <option>Не содержится в контейнере</option>
+                                    {
+                                        ContsInList?.map((item) => {
+                                            return (
+                                                <option key={item.Id} value={item.Id}>{item.Name}</option>
+                                            );
+                                        })
+                                    }
+                                </select>
+                                <button onClick={() => console.log(ContInSelect)}>Выбрать</button>
+                            </div>
+                        )
+                    }
+                </div>
+                <button onClick={EditCont}>Сохранить</button>
             </div>
-            <button onClick={EditCont}>Сохранить</button>
-        </div>
+        </>
+
     )
 
 }

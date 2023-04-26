@@ -8,5 +8,5 @@ export default interface Substance {
     Investigated: string,
     Left: string,
     URL?: string,
-    ContId? : string
+    ContId? : string,
 }

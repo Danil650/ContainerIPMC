@@ -10,6 +10,7 @@ import { useRouter } from 'next/router';
 import Cookies from 'js-cookie'
 import User from 'lib/User';
 import SubstCont from 'lib/SubstContainer';
+import Image from 'next/image';
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     let admin = false;
@@ -216,6 +217,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, admin }: Props) {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <nav className={styles.menuBox}>
+                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={()=>router.push("/")}/>
                 <button onClick={() => router.push("/import/")}>Импорт</button>
                 <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
                 <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
@@ -223,6 +225,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, admin }: Props) {
                     admin == true ? (<button>Управление пользователями</button>)
                         : <></>
                 }
+                <button onClick={() => router.push(`/outputdata`)}>выходная информ-ия</button>
                 <button onClick={() => ClearCookies()}>Выход</button>
             </nav>
 
@@ -250,8 +253,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, admin }: Props) {
                                 <div key={item.Id}>
                                     <li>Хим. вещество: {item.SubstName}</li>
                                     <button onClick={() => {
-                                        if(item.ContId)
-                                        {
+                                        if (item.ContId) {
                                             OpenClickHandler(item.ContId);
                                         }
                                     }}>&gt;</button>
