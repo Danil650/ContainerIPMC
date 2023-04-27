@@ -217,7 +217,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, admin }: Props) {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <nav className={styles.menuBox}>
-                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={()=>router.push("/")}/>
+                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => router.push("/")} />
                 <button onClick={() => router.push("/import/")}>Импорт</button>
                 <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
                 <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>

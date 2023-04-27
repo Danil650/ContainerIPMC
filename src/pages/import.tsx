@@ -7,6 +7,7 @@ import router, { useRouter } from "next/router";
 import styles from '@/styles/Home.module.css'
 import Image from 'next/image';
 import User from "lib/User";
+import Head from "next/head";
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     let admin = false;
@@ -137,6 +138,11 @@ function App({ admin }: Props) {
 
     return (
         <>
+            <Head>
+                <title>Импорт</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
             <nav className={styles.menuBox}>
                 <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => router.push("/")} />
                 <button onClick={() => router.push("/import/")}>Импорт</button>
