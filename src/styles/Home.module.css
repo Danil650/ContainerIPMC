@@ -1,0 +1,141 @@
+.menuBox {
+  display: flex;
+  min-height: 15%;
+  padding: 5px;
+  align-items: center;
+  justify-content: space-around;
+  border: solid;
+}
+
+.menuBox img:hover{
+  cursor: pointer;
+}
+.mainBox
+{
+  margin: 0;
+  padding: 0;
+  height: max-content;
+  background-color: #47ad9f;
+  display: flex;
+  justify-content:space-around;
+
+}
+
+.mainBox div
+{
+  display: flex;
+  flex-direction: column;
+  border: solid;
+  margin: 10px;
+  height: max-content;
+  background-color: #079199;
+}
+
+.substContFree
+{
+  width: 30vw;
+  border: solid;
+  padding: 10px;
+}
+
+.contMain
+{
+  width: 70vw;
+  border: solid;
+  padding: 10px;
+  height: max-content;
+}
+.contMain select
+{
+  height: 4vh;
+  margin-bottom: 10px;
+}
+.containerDiv
+{
+  width:auto;
+  background-color: aquamarine;
+  display: flex;
+  padding-right: 5px;
+}
+
+.edit{
+  margin-top: 20vh;
+}
+
+.edit div {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  margin-top: 10px;
+  flex-direction: column;
+}
+
+.edit button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  margin-left: 47%;
+  margin-top: 10px;
+}
+
+.edit label {
+  margin-right: 10px;
+}
+
+.edit input {
+  margin-right: 10px;
+}
+
+.searchPanel {
+  position: relative;
+  display: inline-block;
+  margin: 10px;
+  font-size: 16px;
+}
+
+.searchPanel ul {
+  border: solid;
+  padding: 5px;
+}
+
+.searchPanel div {
+  display: flex;
+  align-items: center;
+}
+
+.backBtn {
+  padding: 10px;
+  background-color: #D9E16F;
+}
+
+.import {
+  width: 250px;
+  height: 250px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;    
+  display: flex;
+  flex-direction: column;
+}
+
+.SpecSelect{
+  display: flex;
+  justify-content: center;
+}
+
+.ManagMenu {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  height: 67vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.ManagMenu * {
+width: 50%;
+}
