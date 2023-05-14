@@ -21,7 +21,7 @@ const App = () => {
                 RoleId: 0,
                 FIO: ""
             }
-            fetch("http://localhost:3000/api/getuser", {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/getuser`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

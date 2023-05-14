@@ -34,14 +34,14 @@ function App() {
     useEffect(() => {
         if (Id) {
             if (Id != "AddSubst") {
-                fetch(`http://localhost:3000/api/substincontbyid/${Id}`)
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/substincontbyid/${Id}`)
                     .then(async res => await res.json())
                     .then(data => {
                         if (data.length == 0) {
                             setDel(true);
                         }
                     });
-                fetch(`http://localhost:3000/api/substbyid/${Id}`).then((response) => response.json().then((data) => {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/substbyid/${Id}`).then((response) => response.json().then((data) => {
                     setSubstId(data[0].Id);
                     setSubstToEdit(data[0]);
                     setSubstName(data[0].SubstName);
@@ -67,7 +67,7 @@ function App() {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -85,13 +85,13 @@ function App() {
                     }
                 });
         }
-        fetch(`http://localhost:3000/api/unitall`)
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/unitall`)
             .then(async res => await res.json())
             .then(data => {
                 setUnit(data);
             });
 
-        fetch(`http://localhost:3000/api/invoce`)
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/invoce`)
             .then(async res => await res.json())
             .then(data => {
                 setInvoceList(data);
@@ -125,7 +125,7 @@ function App() {
                     Subst: newSubst,
                     user: Cookies.get("user") ?? ""
                 }
-                fetch("http://localhost:3000/api/updatesubst", {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -157,7 +157,7 @@ function App() {
                     Subst: newSubst,
                     user: Cookies.get("user") ?? ""
                 }
-                fetch("http://localhost:3000/api/updatesubst", {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -191,7 +191,7 @@ function App() {
             user: Cookies.get("user") ?? ""
         }
         if (confirm(`Хотите удалить ${SubstName} из контейнера?`)) {
-            await fetch("http://localhost:3000/api/delsubstfromcont", {
+            await fetch(`${process.env.NEXT_PUBLIC_URL}api/delsubstfromcont`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

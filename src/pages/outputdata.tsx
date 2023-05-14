@@ -7,7 +7,7 @@ import Cookies from 'js-cookie';
 import Head from 'next/head';
 import Image from 'next/image';
 import Substance from 'lib/Substance';
-import docx, { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
+import docx, { Document, Packer, PageOrientation, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
 import { saveAs } from 'file-saver';
 import Container from 'lib/Container';
 import Nav from 'lib/Nav';
@@ -28,7 +28,7 @@ function App() {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -45,21 +45,21 @@ function App() {
         let data: ToSave;
         switch (Option) {
             case 0:
-                const subst: Substance[] = await fetch("http://localhost:3000/api/allsubst").then((res) => res.json());
+                const subst: Substance[] = await fetch(`${process.env.NEXT_PUBLIC_URL}api/allsubst`).then((res) => res.json());
                 data = {
                     AllSubst: subst
                 }
                 generateWordFile(data);
                 break;
             case 1:
-                const cont: Container[] = await fetch("http://localhost:3000/api/contforexport").then((res) => res.json());
+                const cont: Container[] = await fetch(`${process.env.NEXT_PUBLIC_URL}api/contforexport`).then((res) => res.json());
                 data = {
                     AllCont: cont
                 }
                 generateWordFile(data);
                 break;
             case 2:
-                const substEnd: Substance[] = await fetch("http://localhost:3000/api/allsubst/1").then((res) => res.json());
+                const substEnd: Substance[] = await fetch(`${process.env.NEXT_PUBLIC_URL}api/allsubst/1`).then((res) => res.json());
                 data = {
                     SubstLeft: substEnd
                 }
@@ -67,7 +67,7 @@ function App() {
                 break;
             case 3:
                 let UserTurnove: UserOutput[] = [];
-                await fetch("http://localhost:3000/api/userturnover", {
+                await fetch(`${process.env.NEXT_PUBLIC_URL}api/userturnover`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -381,6 +381,7 @@ function App() {
         // Создание таблицы
         if (rows && headers) {
             const table = new Table({
+
                 rows: [headers, ...rows],
             });
             const locales = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -388,6 +389,7 @@ function App() {
             // создаем объекты Date
             const now = new Date().toLocaleString("ru-RU", { timeZone: locales });
             const info = new Paragraph({
+
                 children: [
                     new TextRun("Получен: "),
                     new TextRun({
@@ -397,13 +399,16 @@ function App() {
             });
             // Создание документа
             const doc = new Document({
-
                 sections: [
                     {
-                        children: [
-                            info,
-                            table
-                        ],
+                        properties: {
+                            page: {
+                                size: {
+                                    orientation: PageOrientation.LANDSCAPE,
+                                },
+                            },
+                        },
+                        children: [info, table],
                     },
                 ],
             });

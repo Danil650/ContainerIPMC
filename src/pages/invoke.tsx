@@ -24,7 +24,7 @@ export default function Home() {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -45,7 +45,7 @@ export default function Home() {
                 DateInvoce: DateInvoce
             };
 
-            fetch("http://localhost:3000/api/invoce", {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/invoce`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

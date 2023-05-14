@@ -3,8 +3,11 @@ body
     margin: 0;
     background-color:#47ada1;
     font-family: 'Times New Roman', Times, serif;
+    font-size: 20px;
 }
-
+input{
+    font-size: 18px;
+}
 button{
     background-color: #f8feaf;
     font-size: large;

@@ -12,13 +12,13 @@ import User from 'lib/User';
 import Nav from 'lib/Nav';
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
-    const response = await fetch("http://localhost:3000/api/parrentcontainers");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/parrentcontainers`);
     let cont: Container = await response.json();
-    const response2 = await fetch("http://localhost:3000/api/substfree");
+    const response2 = await fetch(`${process.env.NEXT_PUBLIC_URL}api/substfree`);
     let subst: Substance[] = await response2.json();
     if (context.req.cookies["user"]) {
         console.log(context.req.cookies["user"]);
-        return fetch(`http://localhost:3000/api/checkuser/${context.req.cookies["user"]}`)
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
             .then(async (res) => await res.json())
             .then((data) => {
                 if (data && data.length !== 0) {
@@ -79,7 +79,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -152,7 +152,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
 
     async function Search() {
         if (searchTerm.trim().length > 0) {
-            let res = await fetch(`http://localhost:3000/api/search/${searchTerm}`);
+            let res = await fetch(`${process.env.NEXT_PUBLIC_URL}api/search/${searchTerm}`);
             let date = await res.json();
             setSearchList(date);
             setShowResults(true);
@@ -174,7 +174,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                     con: Location,
                     cookieValue: cookieValue,
                 }
-                const response = await fetch("http://localhost:3000/api/substintocont", {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/substintocont`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -187,7 +187,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                 else {
                     let newsubstlst: Substance[] = from(SubstList).where(x => x.Id !== Id).toArray() as Substance[];
                     setSubstList(newsubstlst);
-                    fetch(`http://localhost:3000/api/substincont/${Location}`).then(async (res) => {
+                    fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Location}`).then(async (res) => {
                         if (res.ok) {
                             setSubstInCont(await res.json());
                         }
@@ -202,7 +202,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
 
     async function BuildChildrens(data: Container[], Id: string) {
         let Conts: Container[] = data;
-        const response = await fetch(`http://localhost:3000/api/contid/${Id}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/contid/${Id}`);
         let dataBd: Container = await response.json();
         setSubstHist(HistoryCont => [...HistoryCont, dataBd]);
         // Conts = Conts.filter(x => x.Id !== Id);
@@ -211,10 +211,10 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
     async function OpenClickHandler(Id: string) {
         if (Id != "-1") {
             SetLocation(Id);
-            const response = await fetch(`http://localhost:3000/api/Contin/${Id}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/Contin/${Id}`);
             const data = await response.json();
             await BuildChildrens(data, Id);
-            fetch(`http://localhost:3000/api/substincont/${Id}`).then(async (res) => {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Id}`).then(async (res) => {
                 if (res.ok) {
                     setSubstInCont(await res.json());
                     return;
@@ -229,7 +229,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
 
     async function GoBack() {
         SetLocation("");
-        const response = await fetch("http://localhost:3000/api/parrentcontainers")
+        const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/parrentcontainers`)
         const data = await response.json();
         await setContList(data);
         SetLocation("");
@@ -255,7 +255,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                 <input
                     type="text"
                     value={searchTerm}
-                    onChange={(e)=>setSearchTerm(e.target.value)}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     onFocus={() => setShowResults(true)}
                 />
                 <button onClick={() => Search()}>Поиск</button>

@@ -11,11 +11,11 @@ import Nav from 'lib/Nav';
 import Role from 'lib/Role';
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
-    const response = await fetch("http://localhost:3000/api/roles");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/roles`);
     let Role = await response.json();
     if (context.req.cookies["user"]) {
         console.log(context.req.cookies["user"]);
-        return fetch(`http://localhost:3000/api/checkuser/${context.req.cookies["user"]}`)
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
             .then(async (res) => await res.json())
             .then((data) => {
                 if (data && data.length !== 0) {
@@ -58,7 +58,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
     const [SelUserEdit, setSelUserEdit] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:3000/api/usersall", {
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/usersall`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -145,7 +145,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
                 UserCreate: userCraete,
                 CurUser: Curuser[0]
             };
-            fetch("http://localhost:3000/api/createuser", {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/createuser`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -171,8 +171,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
                 });
 
         }
-        else
-        {
+        else {
             alert("Заполните все поля");
         }
     }
@@ -181,8 +180,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
         if (SelUserEdit.length > 0 && Curuser) {
             router.push(`/edituser/${SelUserEdit}`);
         }
-        else
-        {
+        else {
             alert("Выбирите пользователя");
         }
     }

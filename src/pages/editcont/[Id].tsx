@@ -11,7 +11,7 @@ import Nav from 'lib/Nav';
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     let admin = false;
     const lang = context.req.cookies['user'];
-    const response3 = await fetch(`http://localhost:3000/api/checkuser/${lang}`);
+    const response3 = await fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${lang}`);
     let user: User[] = await response3.json();
 
     if (user[0]?.RoleId == 1) {
@@ -41,7 +41,7 @@ function App({ admin }: Props) {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -64,7 +64,7 @@ function App({ admin }: Props) {
     useEffect(() => {
         if (Id) {
             if (Id != "AddCotainer") {
-                fetch(`http://localhost:3000/api/contid/${Id}`).then((response) => response.json()).then((data) => {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/contid/${Id}`).then((response) => response.json()).then((data) => {
                     setContId(data[0].Id);
                     setContName(data[0].Name);
                     setEdit(true);
@@ -79,7 +79,7 @@ function App({ admin }: Props) {
     }, [Id])
 
     function buildConts() {
-        fetch("http://localhost:3000/api/containerall")
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/containerall`)
             .then(async res => await res.json())
             .then(data => setContsInList(data));
     }
@@ -116,7 +116,7 @@ function App({ admin }: Props) {
                     user: Cookies.get("user") ?? ""
                 };
 
-                fetch("http://localhost:3000/api/updatecont", {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatecont`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -142,7 +142,7 @@ function App({ admin }: Props) {
                     cont: newCont,
                     user: Cookies.get("user") ?? ""
                 };
-                fetch("http://localhost:3000/api/updatecont", {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatecont`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -163,7 +163,7 @@ function App({ admin }: Props) {
     }
     function DelFromCont() {
         if (confirm(`Хотите удалить ${ContName}?`)) {
-            fetch(`http://localhost:3000/api/delcont/${ContId}`).then(
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/delcont/${ContId}`).then(
                 () => router.push('/')
             )
         }

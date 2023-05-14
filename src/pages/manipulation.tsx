@@ -33,7 +33,7 @@ export default function Home() {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -45,7 +45,7 @@ export default function Home() {
                     }
                 });
         }
-        fetch(`http://localhost:3000/api/allsubst/`)
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/allsubst/`)
             .then(async res => await res.json())
             .then(data => {
                 setSubstList(data);
@@ -54,7 +54,7 @@ export default function Home() {
 
     useEffect(() => {
         if (SelectSubst != "") {
-            fetch(`http://localhost:3000/api/substbyid/${SelectSubst}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/substbyid/${SelectSubst}`)
                 .then(async res => await res.json())
                 .then(data => {
                     setCurSubst(data[0]);
@@ -110,7 +110,7 @@ export default function Home() {
                                 Mass: ActNumb
                             };
 
-                            fetch("http://localhost:3000/api/manipulation", {
+                            fetch(`${process.env.NEXT_PUBLIC_URL}api/manipulation`, {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",

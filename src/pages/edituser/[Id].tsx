@@ -11,7 +11,7 @@ import Nav from 'lib/Nav';
 import Role from 'lib/Role';
 
 export async function getServerSideProps() {
-    const response = await fetch("http://localhost:3000/api/roles");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/roles`);
     let Role = await response.json();
     return {
         props: { Role }
@@ -36,7 +36,7 @@ function App({ Role }: getServerSideProps) {
             router.push("/login");
         }
         else {
-            fetch(`http://localhost:3000/api/checkuser/${Cookies.get("user")}`)
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
                 .then(async res => await res.json())
                 .then(data => {
                     if (data.length == 0) {
@@ -58,7 +58,7 @@ function App({ Role }: getServerSideProps) {
                 RoleId: 0,
                 FIO: ""
             }
-            fetch("http://localhost:3000/api/getuser", {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/getuser`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -103,7 +103,7 @@ function App({ Role }: getServerSideProps) {
                 CurUser: Curuser[0],
                 UserUpdate: UserUpd
             }
-            fetch("http://localhost:3000/api/updateuser", {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/updateuser`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
