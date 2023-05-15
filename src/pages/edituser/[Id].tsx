@@ -52,7 +52,7 @@ function App({ Role }: getServerSideProps) {
     useEffect(() => {
         if (Id) {
             const userId: User = {
-                IdUsers: Id[0],
+                IdUsers: Id.toString(),
                 Login: "",
                 Password: "",
                 RoleId: 0,
