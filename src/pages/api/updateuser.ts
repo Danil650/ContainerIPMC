@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const data = req.body as SndData;
         if (data.CurUser.RoleId == 1 && data.UserUpdate.Login.trim().length > 0 && data.UserUpdate.RoleId) {
             if (data.UserUpdate.Password.trim().length > 0) {
-                const checkLog: User[] = await query('SELECT Login FROM containerdb.users where Login = ?;', [data.UserUpdate.Login]) as User[];
+                const checkLog: User[] = await query('SELECT * FROM containerdb.users where Login = ? && IdUsers != ?;', [data.UserUpdate.Login, data.UserUpdate.IdUsers]) as User[];
                 if (checkLog && checkLog.length == 0) {
                     await query(`UPDATE containerdb.users
                     SET

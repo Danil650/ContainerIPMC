@@ -1,10 +1,10 @@
 export default interface Container {
     Id: string;
-    ExcelId: number;
-    ContainsIn?: number | string;
+    ContainsIn?: string;
     Name: string;
-    ContQauntIn? : number;
-    SubstQauntIn? : number;
+    ContQauntIn?: number;
+    SubstQauntIn?: number;
     SubstHave?: string;
     DateCreate?: Date;
+    ContainsInName?: string,
 }

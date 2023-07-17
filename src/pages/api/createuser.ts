@@ -12,6 +12,8 @@ const handler: NextApiHandler = async (req, res) => {
         };
         const data = req.body as SndData;
         const checkLog: User[] = await query('SELECT Login FROM containerdb.users where Login = ?;', [data.UserCreate.Login]) as User[];
+        console.log(data);
+
         if (checkLog && checkLog.length == 0 && data.UserCreate.RoleId) {
             await query(`INSERT INTO containerdb.users
             (IdUsers,

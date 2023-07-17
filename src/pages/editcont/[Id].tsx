@@ -8,24 +8,54 @@ import User from 'lib/User';
 import Head from 'next/head';
 import Nav from 'lib/Nav';
 
+
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
-    let admin = false;
-    const lang = context.req.cookies['user'];
-    const response3 = await fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${lang}`);
-    let user: User[] = await response3.json();
+    if (context.req.cookies["user"]) {
+        console.log(context.req.cookies["user"]);
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
+            .then(async (res) => await res.json())
+            .then((data) => {
+                if (data && data.length !== 0) {
+                    let CurUserBd: User[] = data;
 
-    if (user[0]?.RoleId == 1) {
-        admin = true;
+                    return {
+                        props: { CurUserBd }, // будет передано в компонент страницы как props
+                    };
+
+                } else {
+                    return {
+                        redirect: {
+                            destination: '/',
+                            permanent: false
+                        }
+                    };
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching CurUserBd:', error);
+                return {
+                    redirect: {
+                        destination: '/',
+                        permanent: false
+                    }
+                };
+            });
+
     }
-
-    return {
-        props: { admin }, // will be passed to the page component as props
+    else {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        };
     }
 }
-interface Props {
-    admin?: boolean,
+interface getServerSideProps {
+    CurUserBd: User[]
 }
-function App({ admin }: Props) {
+
+function App({ CurUserBd }: getServerSideProps) {
     const router = useRouter()
     const { Id } = router.query; // получаем id из параметров маршрута
     let [ContId, setContId] = useState<string>("");
@@ -33,7 +63,7 @@ function App({ admin }: Props) {
     let [IsEdit, setEdit] = useState(false);
     let [ContsInList, setContsInList] = useState<Container[]>([]);
     let [ContInSelect, setContInSelect] = useState("");
-    const [Curuser, setCuruser] = useState<User[]>();
+    const [Curuser, setCuruser] = useState<User[]>(CurUserBd);
 
     useEffect(() => {
 
@@ -49,13 +79,7 @@ function App({ admin }: Props) {
                         Cookies.remove("user");
                     }
                     else {
-                        if (data[0].RoleId == 3) {
-                            router.push("/login");
-                            Cookies.remove("user");
-                        }
-                        else {
-                            setCuruser(data);
-                        }
+                        setCuruser(data);
                     }
                 });
         }
@@ -83,20 +107,6 @@ function App({ admin }: Props) {
             .then(async res => await res.json())
             .then(data => setContsInList(data));
     }
-
-    function handleChange(event: any) {
-        const name = event.target.name;
-        const value = event.target.value;
-        let setter: boolean;
-        switch (name) {
-            case "ContName":
-                setContName(value);
-                break;
-            default:
-                break;
-        }
-    }
-
     async function EditCont() {
         // Обработка сохранения данных
         interface SendData {
@@ -107,7 +117,6 @@ function App({ admin }: Props) {
             if (IsEdit) {
                 let newCont: Container = {
                     Id: ContId,
-                    ExcelId: 0,
                     Name: ContName,
                     DateCreate: new Date(),
                 }
@@ -124,6 +133,7 @@ function App({ admin }: Props) {
                     body: JSON.stringify(sndData),
                 }).then((res) => {
                     if (res.ok) {
+                        alert("Обновлено");
                         router.push('/');
                     } else {
                         alert("Что то пошло не так");
@@ -134,7 +144,6 @@ function App({ admin }: Props) {
                 //add
                 let newCont: Container = {
                     Id: "0",
-                    ExcelId: 0,
                     Name: ContName,
                     ContainsIn: ContInSelect
                 }
@@ -150,6 +159,7 @@ function App({ admin }: Props) {
                     body: JSON.stringify(sndData),
                 }).then((res) => {
                     if (res.ok) {
+                        alert("Добавлено");
                         router.push('/');
                     } else {
                         alert("Что то пошло не так");
@@ -161,13 +171,14 @@ function App({ admin }: Props) {
             alert("Заполните все поля");
         }
     }
-    function DelFromCont() {
-        if (confirm(`Хотите удалить ${ContName}?`)) {
-            fetch(`${process.env.NEXT_PUBLIC_URL}api/delcont/${ContId}`).then(
-                () => router.push('/')
-            )
-        }
-    }
+    
+    // function DelFromCont() {
+    //     if (confirm(`Хотите удалить ${ContName}?`)) {
+    //         fetch(`${process.env.NEXT_PUBLIC_URL}api/delcont/${ContId}`).then(
+    //             () => router.push('/')
+    //         )
+    //     }
+    // }
 
     return (
         <>
@@ -182,14 +193,16 @@ function App({ admin }: Props) {
             <div className={styles.edit}>
                 <div>
                     <label>
-                        Название:
-                        <input type="text" name="ContName" defaultValue={ContName} onChange={handleChange} />
+                        Название контейнера:
+                        <input type="text" name="ContName" defaultValue={ContName} onChange={(e) => setContName(e.target.value)} />
                     </label>
+                   
                     {
                         IsEdit ? (
                             <></>
                         ) : (
                             <div>
+                                 <label>Положение в контейнере</label>
                                 <select value={ContInSelect} onChange={(e) => setContInSelect(e.target.value)}>
                                     <option>Не содержится в контейнере</option>
                                     {

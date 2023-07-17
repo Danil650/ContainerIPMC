@@ -15,7 +15,7 @@ const handler: NextApiHandler = async (req, res) => {
                 GROUP BY c.Id`,
                 [id.toString()]
             );
-            res.json(results);
+            return res.json(results);
         }
         res.status(500);
     } catch (e) {

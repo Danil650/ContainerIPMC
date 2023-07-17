@@ -11,7 +11,51 @@ import UnitType from "lib/Unit";
 import Invoce from "lib/Invoce";
 import Link from "next/link";
 
-function App() {
+export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
+    if (context.req.cookies["user"]) {
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
+            .then(async (res) => await res.json())
+            .then((data) => {
+                if (data && data.length !== 0) {
+                    let CurUserBd: User[] = data;
+
+                    return {
+                        props: { CurUserBd }, // будет передано в компонент страницы как props
+                    }
+                } else {
+                    return {
+                        redirect: {
+                            destination: '/',
+                            permanent: false
+                        }
+                    };
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching CurUserBd:', error);
+                return {
+                    redirect: {
+                        destination: '/',
+                        permanent: false
+                    }
+                };
+            });
+
+    }
+    else {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        };
+    }
+}
+interface getServerSideProps {
+    CurUserBd: User[]
+}
+
+function App({ CurUserBd }: getServerSideProps) {
     const router = useRouter()
     const { Id } = router.query // получаем id из параметров маршрута;
     const [SubstId, setSubstId] = useState<string>("");
@@ -28,9 +72,11 @@ function App() {
     const [CanDel, setDel] = useState(false);
     const [Unit, setUnit] = useState<UnitType[]>([]);
     const [UnitIndex, setUnitIndex] = useState(1);
-    const [Curuser, setCuruser] = useState<User[]>();
+    const [Curuser, setCuruser] = useState<User[]>(CurUserBd);
     const [Invoce, setInvoce] = useState("");
     const [InvoceList, setInvoceList] = useState<Invoce[]>([])
+    const [BlockBtn, setBlockBtn] = useState(false);
+
     useEffect(() => {
         if (Id) {
             if (Id != "AddSubst") {
@@ -41,7 +87,7 @@ function App() {
                             setDel(true);
                         }
                     });
-                fetch(`${process.env.NEXT_PUBLIC_URL}api/substbyid/${Id}`).then((response) => response.json().then((data) => {
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/substbyid/${Id}`).then(async (response) => await response.json().then((data) => {
                     setSubstId(data[0].Id);
                     setSubstToEdit(data[0]);
                     setSubstName(data[0].SubstName);
@@ -75,13 +121,7 @@ function App() {
                         Cookies.remove("user");
                     }
                     else {
-                        if (data[0].RoleId == 3) {
-                            router.push("/login");
-                            Cookies.remove("user");
-                        }
-                        else {
-                            setCuruser(data);
-                        }
+                        setCuruser(data);
                     }
                 });
         }
@@ -101,85 +141,101 @@ function App() {
 
     async function EditSubst() {
         // Обработка сохранения данных
-        if (Id && SubstName.trim().length != 0) {
-            interface SendDate {
-                Subst: Substance,
-                user: string
-            }
-            if (IsEdit) {
-
-                let newSubst: Substance = {
-                    Id: SubstId,
-                    SubstName: SubstName,
-                    CAS: CAS,
-                    Meaning: Meaning,
-                    Mass: Mass,
-                    UnitId: UnitIndex,
-                    Formula: Formula,
-                    Investigated: String(Number(Investigated)),
-                    Left: String(Number(Left)),
-                    URL: URL,
-                    Passport: Invoce,
-                }
-                let SndDate: SendDate = {
-                    Subst: newSubst,
-                    user: Cookies.get("user") ?? ""
-                }
-                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(SndDate),
-                }).then((res) => {
-                    if (res.ok) {
-                        router.push('/');
-                    } else {
-                        alert("Название должно быть уникальным");
+        if (numDigitsAfterDecimal(Mass.toString()) <= 4) {
+            if (Number(Mass) > 0) {
+                if (Id && SubstName.trim().length != 0 && Invoce && Invoce.length > 0) {
+                    interface SendDate {
+                        Subst: Substance,
+                        user: string
                     }
-                });
-            }
-            else {
-                let newSubst: Substance = {
-                    Id: "0",
-                    SubstName: SubstName,
-                    CAS: CAS,
-                    Meaning: Meaning,
-                    Mass: Mass,
-                    UnitId: UnitIndex,
-                    Formula: Formula,
-                    Investigated: String(Number(Investigated)),
-                    Left: String(Number(Left)),
-                    URL: URL,
-                    Passport: Invoce,
-                }
-                let SndDate: SendDate = {
-                    Subst: newSubst,
-                    user: Cookies.get("user") ?? ""
-                }
-                fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(SndDate),
-                }).then((res) => {
-                    if (res.ok) {
-                        router.push('/');
-                    } else {
-                        return res.json()
+                    if (IsEdit) {
+                        let newSubst: Substance = {
+                            Id: SubstId,
+                            SubstName: SubstName,
+                            CAS: CAS,
+                            Meaning: Meaning,
+                            Mass: Mass,
+                            UnitId: UnitIndex,
+                            Formula: Formula,
+                            Investigated: String(Number(Investigated)),
+                            Left: String(Number(Left)),
+                            URL: URL,
+                            Passport: Invoce,
+                        }
+                        let SndDate: SendDate = {
+                            Subst: newSubst,
+                            user: Cookies.get("user") ?? ""
+                        }
+                        fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(SndDate),
+                        })
+                            .then((res) => {
+                                if (res.ok) {
+                                    alert("Изменено");
+                                    router.push("/");
+                                }
+                                else {
+                                    setBlockBtn(false);
+                                    alert("Неверные данные");
+                                }
+                            })
+                            .catch((error) => {
+                                console.error("Ошибка получения данных: ", error);
+                            });
                     }
-                })
-                    .then((data) => {
-                        alert(data);
-                    });
-            }
+                    else {
+                        let newSubst: Substance = {
+                            Id: "0",
+                            SubstName: SubstName,
+                            CAS: CAS,
+                            Meaning: Meaning,
+                            Mass: Mass,
+                            UnitId: UnitIndex,
+                            Formula: Formula,
+                            Investigated: String(Number(Investigated)),
+                            Left: String(Number(Left)),
+                            URL: URL,
+                            Passport: Invoce,
+                        }
+                        let SndDate: SendDate = {
+                            Subst: newSubst,
+                            user: Cookies.get("user") ?? ""
+                        }
+                        fetch(`${process.env.NEXT_PUBLIC_URL}api/updatesubst`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(SndDate),
+                        }).then(async (res) => {
+                            if (res.ok) {
+                                router.push('/');
+                            } else {
+                                alert(await res.json());
+                            }
+                        })
+                            .catch((error) => {
+                                alert(error);
+                            });
 
+                    }
+                } else {
+                    alert("Заполните необходимые поля");
+
+                }
+            } else {
+                alert("Масса заполнена неверно");
+            }
 
         }
         else {
-            alert("Заполните все поля");
+            alert("Число после запятой не должно превишать 4 'ДЕСЯТИТЫСЯЧНЫЕ'");
         }
+
     }
     async function DelFromCont() {
         interface SndDate {
@@ -202,6 +258,20 @@ function App() {
         }
     }
 
+    function onChangeActNumber(e: string) {
+        if (Number(e) && e.length < 10) {
+            setMass(Number(e));
+        }
+        else {
+            setMass(0);
+        }
+    }
+
+    function numDigitsAfterDecimal(x: string) {
+        var afterDecimalStr = x.toString().split('.')[1] || ''
+        return afterDecimalStr.length
+    }
+
     return (
         <>
             <Head>
@@ -212,55 +282,86 @@ function App() {
             {
                 Curuser && Curuser[0] ? (Nav(router, Curuser[0])) : Nav(router, undefined)
             }
-
             <div className={styles.edit}>
                 <div>
-                    <label>
-                        Накладная прибытия:
-                        <select value={Invoce} onChange={(e) => setInvoce(e.target.value)}>
-                            {InvoceList && InvoceList.length > 0 ? (
-                                InvoceList?.map((item) => {
-                                    return (
-                                        <option key={item.IdInvoce} value={item.IdInvoce}>
-                                            {item.IdInvoce}
-                                        </option>
-                                    );
-                                })
-                            ) : (
-                                <option>---</option>
-                            )}
-                        </select>
-                    </label>
-                    <Link href={"/invoke"}>Добавить накладную</Link>
+                    {IsEdit ? (<>
+                        <label>
+                            *Накладная прибытия:
+                            <select disabled={true} value={Invoce} onChange={(e) => setInvoce(e.target.value)}>
+                                <option value={""}>---</option>
+                                {InvoceList && InvoceList.length > 0 ? (
+                                    InvoceList?.map((item) => {
+                                        return (
+                                            <option key={item.IdInvoce} value={item.IdInvoce}>
+                                                {item.IdInvoce}
+                                            </option>
+                                        );
+                                    })
+                                ) : (
+                                    <option>---</option>
+                                )}
+                            </select>
+                        </label>
+                    </>) : <>
+                        <label>
+                            *Накладная прибытия:
+                            <select value={Invoce} onChange={(e) => setInvoce(e.target.value)}>
+                                <option value={""}>---</option>
+                                {InvoceList && InvoceList.length > 0 ? (
+                                    InvoceList?.map((item) => {
+                                        return (
+                                            <option key={item.IdInvoce} value={item.IdInvoce}>
+                                                {item.IdInvoce}
+                                            </option>
+                                        );
+                                    })
+                                ) : (
+                                    <option>---</option>
+                                )}
+                            </select>
+                        </label>
+                    </>}
+
+
                 </div>
                 <div>
                     <label>
-                        Название:
-                        <input type="text" name="SubstName" defaultValue={SubstName} onChange={(e) => setSubstName(e.target.value)} />
+                        *Название:
+                        <input type="text" name="SubstName" value={SubstName} onChange={(e) => setSubstName(e.target.value)} />
                     </label>
                 </div>
                 <div>
                     <label>
                         CAS:
-                        <input type="text" name="CAS" defaultValue={CAS} onChange={(e) => setCAS(e.target.value)} />
+                        <input type="text" name="CAS" value={CAS} onChange={(e) => setCAS(e.target.value)} />
                     </label>
                 </div>
                 <div>
                     <label>
                         Описание:
-                        <input type="text" name="Meaning" defaultValue={Meaning} onChange={(e) => setMeaning(e.target.value)} />
+                        <input type="text" name="Meaning" value={Meaning} onChange={(e) => setMeaning(e.target.value)} />
                     </label>
                 </div>
                 <div>
-                    <label>
-                        Масса:
-                        <input type="number" step="any" name="Mass" value={Mass} onChange={(e) => setMass(e.target.valueAsNumber)} />
-                    </label>
+                    {
+                        IsEdit ? (<label>
+                            *Масса:
+                            <input disabled={true} value={Mass.toString()} type="number" id="name" name="name" maxLength={8} size={10} />
+                        </label>)
+                            : <label>
+                                *Масса:
+                                <input onChange={(e) => onChangeActNumber(e.target.value)} defaultValue={Mass.toString()} type="number" id="name" name="name" maxLength={8} size={10} />
+                            </label>
+                    }
+                    {/* <label>
+                        *Масса:
+                        <input onChange={(e) => onChangeActNumber(e.target.value)} value={Mass.toString()} type="number" id="name" name="name" maxLength={8} size={10} />
+                    </label> */}
                 </div>
                 <div>
-                    <label>
+                    {IsEdit ? (<label>
                         Тип:
-                        <select value={UnitIndex} onChange={(e) => setUnitIndex(Number(e.target.value))}>
+                        <select disabled={true} value={UnitIndex} onChange={(e) => setUnitIndex(Number(e.target.value))}>
                             {Unit && Unit.length > 0 ? (
                                 Unit?.map((item) => {
                                     return (
@@ -273,37 +374,54 @@ function App() {
                                 <option>---</option>
                             )}
                         </select>
-                    </label>
+                    </label>) :
+                        <label>
+                            Тип:
+                            <select value={UnitIndex} onChange={(e) => setUnitIndex(Number(e.target.value))}>
+                                {Unit && Unit.length > 0 ? (
+                                    Unit?.map((item) => {
+                                        return (
+                                            <option key={item.Id} value={item.Id}>
+                                                {item.Title}
+                                            </option>
+                                        );
+                                    })
+                                ) : (
+                                    <option>---</option>
+                                )}
+                            </select>
+                        </label>}
+
                 </div>
                 <div>
                     <label>
                         Формула:
-                        <input type="text" name="Formula" defaultValue={Formula} onChange={(e) => setFormula(e.target.value)} />
+                        <input type="text" name="Formula" value={Formula} onChange={(e) => setFormula(e.target.value)} />
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label className={styles.labelcheckbox}>
                         Изучено:
-                        <input type="checkbox" name="Investigated" checked={Investigated} onChange={(e) => setInvestigated(e.target.checked)} />
+                        <input className={styles.checkbox} type="checkbox" name="Investigated" checked={Investigated} onChange={(e) => setInvestigated(e.target.checked)} />
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label className={styles.labelcheckbox}>
                         Оставлено:
-                        <input type="checkbox" name="Left" checked={Left} onChange={(e) => setLeft(e.target.checked)} />
+                        <input className={styles.checkbox} type="checkbox" name="Left" checked={Left} onChange={(e) => setLeft(e.target.checked)} />
                     </label>
                 </div>
                 <div>
                     <label>
                         Ссылка:
-                        <input type="text" name="URL" defaultValue={URL} onChange={(e) => setURL(e.target.value)} />
+                        <input type="text" name="URL" value={URL} onChange={(e) => setURL(e.target.value)} />
                     </label>
                 </div>
-                <button onClick={EditSubst}>Сохранить</button>
+                <button onClick={() => { EditSubst(), setBlockBtn(!BlockBtn) }}>Сохранить</button>
                 {
                     IsEdit ? (<button disabled={CanDel} onClick={DelFromCont}>Удалить из контейнера</button>) : <></>
                 }
-            </div>
+            </div >
         </>
 
     )

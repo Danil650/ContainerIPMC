@@ -5,9 +5,9 @@ const handler: NextApiHandler = async (req, res) => {
     try {
         const { token } = req.query;
         if (token) {
-            //Поиск вещества по id
             const results = await query(
-                `SELECT IdUsers, RoleId FROM containerdb.users where UserToken = ?;`,
+                `SELECT IdUsers, RoleId, FIO, role.Title as RoleName FROM containerdb.users
+                JOIN role on users.RoleId = role.IdRole where UserToken = ?;`,
                 [token.toString()]
             );
             return res.status(200).json(results);

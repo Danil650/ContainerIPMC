@@ -1,7 +1,8 @@
 export default interface User {
-    IdUsers: string;
-    Login: string;
-    Password: string;
-    FIO: string;
-    RoleId?: number;
-  }
+  IdUsers: string;
+  Login: string;
+  Password: string;
+  FIO: string;
+  RoleId?: number;
+  RoleName?: string
+}

@@ -35,13 +35,11 @@ const App = () => {
                 })
                 .then((data) => {
                     // здесь можно использовать данные в формате JSON
-                    if(data && data.length > 0)
-                    {
+                    if (data && data.length > 0) {
                         Cookies.set("user", data);
                         router.push('/');
                     }
-                    else
-                    {
+                    else {
                         alert("Нет такого пользователя");
                     }
 
@@ -51,23 +49,7 @@ const App = () => {
                 });
         }
         else {
-            alert("Заполните все строки");
-        }
-    }
-
-    function handleChange(event: any) {
-        const name = event.target.name;
-        const value = event.target.value;
-        let setter: boolean;
-        switch (name) {
-            case "Login":
-                setLog(value);
-                break;
-            case "Password":
-                setPswrd(value);
-                break;
-            default:
-                break;
+            alert("Заполните необходимые поля");
         }
     }
     return (
@@ -81,11 +63,11 @@ const App = () => {
                 <div>
                     <label>
                         Логин:
-                        <input type="text" name="Login" onChange={handleChange} />
+                        <input type="text" name="Login" onChange={(e) => setLog(e.target.value.trim())} />
                     </label>
                     <label>
                         Пароль:
-                        <input type="password" name="Password" onChange={handleChange} />
+                        <input type="password" name="Password" onChange={(e) => setPswrd(e.target.value.trim())} />
                     </label>
                 </div>
                 <button onClick={() => EnterUser()}>Войти</button>

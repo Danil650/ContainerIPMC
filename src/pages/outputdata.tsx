@@ -5,40 +5,82 @@ import User from "../../lib/User";
 import React from 'react';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
-import Image from 'next/image';
 import Substance from 'lib/Substance';
-import docx, { Document, Packer, PageOrientation, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
+import { AlignmentType, Document, HeadingLevel, Packer, PageOrientation, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
 import { saveAs } from 'file-saver';
 import Container from 'lib/Container';
 import Nav from 'lib/Nav';
-import UserOutput from 'lib/UserOutput';
+import TurnoveRequest from 'lib/TurnoveRequest';
+import dateformat from 'dateformat';
 
-function App() {
+
+export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
+    if (context.req.cookies["user"]) {
+        console.log(context.req.cookies["user"]);
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
+            .then(async (res) => await res.json())
+            .then((data) => {
+                if (data && data.length !== 0) {
+                    let CurUserBd: User[] = data;
+                    if (CurUserBd[0].RoleId && CurUserBd[0].RoleId <= 2) { //Проверка роли
+                        return {
+                            props: { CurUserBd }, // будет передано в компонент страницы как props
+                        };
+                    }
+                    else {
+                        return {
+                            redirect: {
+                                destination: '/',
+                                permanent: false
+                            }
+                        };
+                    }
+                } else {
+                    return {
+                        redirect: {
+                            destination: '/',
+                            permanent: false
+                        }
+                    };
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching CurUserBd:', error);
+                return {
+                    redirect: {
+                        destination: '/',
+                        permanent: false
+                    }
+                };
+            });
+
+    }
+    else {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        };
+    }
+}
+interface getServerSideProps {
+    CurUserBd: User[]
+}
+
+function App({ CurUserBd }: getServerSideProps) {
     interface ToSave {
         AllSubst?: Substance[],
         AllCont?: Container[],
         SubstLeft?: Substance[],
-        UserOutput?: UserOutput[],
+        UserOutput?: TurnoveRequest[],
     }
     const router = useRouter();
-    const [Curuser, setCuruser] = useState<User[]>();
+    const [Curuser, setCuruser] = useState<User[]>(CurUserBd);
     const [Option, setOption] = useState(0);
     useEffect(() => {
-        if (!Cookies.get("user")) {
+        if (!Cookies.get("user") || !Curuser || !Curuser[0].RoleId) {
             router.push("/login");
-        }
-        else {
-            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
-                .then(async res => await res.json())
-                .then(data => {
-                    if (data.length == 0) {
-                        router.push("/login");
-                        Cookies.remove("user");
-                    }
-                    else {
-                        setCuruser(data);
-                    }
-                });
         }
     }, []);
     async function MakeDock() {
@@ -66,7 +108,7 @@ function App() {
                 generateWordFile(data);
                 break;
             case 3:
-                let UserTurnove: UserOutput[] = [];
+                let UserTurnove: TurnoveRequest[] = [];
                 await fetch(`${process.env.NEXT_PUBLIC_URL}api/userturnover`, {
                     method: "POST",
                     headers: {
@@ -106,34 +148,37 @@ function App() {
             headers = new TableRow({
                 children: [
                     new TableCell({
-                        children: [new Paragraph("Номер хим. вещества")],
+                        children: [new Paragraph({ text: "Номер хим. вещества", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Название")],
+                        children: [new Paragraph({ text: "Название", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("CAS")],
+                        children: [new Paragraph({ text: "CAS", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Значение")],
+                        children: [new Paragraph({ text: "Накладная", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Масса")],
+                        children: [new Paragraph({ text: "Значение", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Формула")],
+                        children: [new Paragraph({ text: "Масса", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Открыто")],
+                        children: [new Paragraph({ text: "Формула", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Осталось")],
+                        children: [new Paragraph({ text: "Открыто", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Ссылка")],
+                        children: [new Paragraph({ text: "Осталось", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Находится в контейнере ")],
+                        children: [new Paragraph({ text: "Ссылка", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
+                    }),
+                    new TableCell({
+                        children: [new Paragraph({ text: "Находится в контейнере ", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                 ],
             });
@@ -143,34 +188,37 @@ function App() {
                 return new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph(substance.Id)],
+                            children: [new Paragraph({ text: substance.Id, alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.SubstName || "")],
+                            children: [new Paragraph({ text: substance.SubstName || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.CAS || "")],
+                            children: [new Paragraph({ text: substance.CAS || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Meaning || "")],
+                            children: [new Paragraph({ text: substance.Passport || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Mass.toString() || "")],
+                            children: [new Paragraph({ text: substance.Meaning || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Formula || "")],
+                            children: [new Paragraph({ text: substance.Mass.toString() || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Investigated)],
+                            children: [new Paragraph({ text: substance.Formula || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Left)],
+                            children: [new Paragraph({ text: substance.Investigated.toString(), alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.URL || "")],
+                            children: [new Paragraph({ text: substance.Left.toString(), alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.ContId || "")],
+                            children: [new Paragraph({ text: substance.URL || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: substance.ContId || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                     ],
                 });
@@ -180,16 +228,16 @@ function App() {
             headers = new TableRow({
                 children: [
                     new TableCell({
-                        children: [new Paragraph("Номер контейнера")],
+                        children: [new Paragraph({ text: "Номер контейнера" || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Содержится в")],
+                        children: [new Paragraph({ text: "Содержится в", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Название контейнера")],
+                        children: [new Paragraph({ text: "Название контейнера", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Название хим. вещества")],
+                        children: [new Paragraph({ text: "Название хим. вещества", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                 ],
             });
@@ -219,37 +267,39 @@ function App() {
             headers = new TableRow({
                 children: [
                     new TableCell({
-                        children: [new Paragraph("Номер хим. вещества")],
+                        children: [new Paragraph({ text: "Номер хим. вещества", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Пасп")],
+                        children: [new Paragraph({ text: "Накладная", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Название")],
+                        children: [new Paragraph({ text: "Название", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
+
                     }),
                     new TableCell({
-                        children: [new Paragraph("CAS")],
+                        children: [new Paragraph({ text: "CAS", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
+
                     }),
                     new TableCell({
-                        children: [new Paragraph("Значение")],
+                        children: [new Paragraph({ text: "Значение", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Масса")],
+                        children: [new Paragraph({ text: "Масса", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Формула")],
+                        children: [new Paragraph({ text: "Формула", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Открыто")],
+                        children: [new Paragraph({ text: "Открыто", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Осталось")],
+                        children: [new Paragraph({ text: "Осталось", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Ссылка")],
+                        children: [new Paragraph({ text: "Ссылка", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Находился в ")],
+                        children: [new Paragraph({ text: "Находился в ", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })]
                     }),
                 ],
             });
@@ -259,34 +309,37 @@ function App() {
                 return new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph(substance.Id)],
+                            children: [new Paragraph({ text: substance.Id, alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.SubstName || "")],
+                            children: [new Paragraph({ text: substance.Passport || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.CAS || "")],
+                            children: [new Paragraph({ text: substance.SubstName || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Meaning || "")],
+                            children: [new Paragraph({ text: substance.CAS || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Mass.toString() || "")],
+                            children: [new Paragraph({ text: substance.Meaning || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Formula || "")],
+                            children: [new Paragraph({ text: substance.Mass.toString() || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Investigated)],
+                            children: [new Paragraph({ text: substance.Formula || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Left)],
+                            children: [new Paragraph({ text: substance.Investigated.toString(), alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.URL || "")],
+                            children: [new Paragraph({ text: substance.Left.toString(), alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.ContId || "")],
+                            children: [new Paragraph({ text: substance.URL || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: substance.ContId || "", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                     ],
                 });
@@ -296,40 +349,44 @@ function App() {
             headers = new TableRow({
                 children: [
                     new TableCell({
-                        children: [new Paragraph("ФИО пользователя")],
+                        children: [new Paragraph({
+                            text: "Номер запроса", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Номер хим. веществыа")],
+                        children: [new Paragraph({
+                            text: "ФИО запрашиваемого", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Пасп")],
+                        children: [new Paragraph({
+                            text: "Название хим. вещества", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Название")],
+                        children: [new Paragraph({
+                            text: "Тип оборота", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("CAS")],
+                        children: [new Paragraph({
+                            text: "Масса оборота", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Значение")],
+                        children: [new Paragraph({
+                            text: "Дата оборота", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Масса")],
+                        children: [new Paragraph({
+                            text: "Текст запроса", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                     new TableCell({
-                        children: [new Paragraph("Формула")],
-                    }),
-                    new TableCell({
-                        children: [new Paragraph("Открыто")],
-                    }),
-                    new TableCell({
-                        children: [new Paragraph("Осталось")],
-                    }),
-                    new TableCell({
-                        children: [new Paragraph("Ссылка")],
-                    }),
-                    new TableCell({
-                        children: [new Paragraph("Разница взятея веществ")],
+                        children: [new Paragraph({
+                            text: "ФИО одобряющего", alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                        })],
                     }),
                 ],
             });
@@ -339,40 +396,36 @@ function App() {
                 return new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph(substance.FIO)],
+                            children: [new Paragraph({
+                                text: substance.IdRequest, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                            })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Id)],
+                            children: [new Paragraph({ text: substance.UserReqFIO, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.SubstName || "")],
+                            children: [new Paragraph({
+                                text: substance.SubstName, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                            })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Passport || "")],
+                            children: [new Paragraph({ text: substance.ActionTitle, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.CAS || "")],
+                            children: [new Paragraph({
+                                text: `${substance.MassCount.toString()} ${substance.UnitTitle} (${substance.Mass.toString()} ${substance.UnitTitle})`, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                            })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Meaning || "")],
+                            children: [new Paragraph({ text: dateformat(substance.ReqDate, "dd.mm.yyyy HH:MM"), alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Mass.toString() || "")],
+                            children: [new Paragraph({
+                                text: substance.RequestText, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 }
+                            })],
                         }),
                         new TableCell({
-                            children: [new Paragraph(substance.Formula || "")],
-                        }),
-                        new TableCell({
-                            children: [new Paragraph(substance.Investigated.toString())],
-                        }),
-                        new TableCell({
-                            children: [new Paragraph(substance.Left.toString())],
-                        }),
-                        new TableCell({
-                            children: [new Paragraph(substance.URL || "")],
-                        }),
-                        new TableCell({
-                            children: [new Paragraph(substance.Difference.toString() || "0")],
+                            children: [new Paragraph({ text: substance.UserAcceptFIO, alignment: AlignmentType.BOTH, heading: HeadingLevel.HEADING_1, indent: { left: 100, right: 100 } })],
                         }),
                     ],
                 });
@@ -393,9 +446,11 @@ function App() {
                 children: [
                     new TextRun("Получен: "),
                     new TextRun({
-                        text: now
+                        text: now,
                     }),
+
                 ],
+                heading: HeadingLevel.HEADING_1
             });
             // Создание документа
             const doc = new Document({
@@ -406,17 +461,28 @@ function App() {
                                 size: {
                                     orientation: PageOrientation.LANDSCAPE,
                                 },
+
                             },
                         },
                         children: [info, table],
                     },
+
                 ],
+                styles: {
+                    default: {
+                        heading1: {
+                            run: {
+                                size: 28,
+                            },
+                        }
+                    }
+                }
             });
+
 
             // Запись документа в файл
             Packer.toBlob(doc).then((blob) => {
-                saveAs(blob, "Хим вещества.docx");
-                console.log("Document created successfully");
+                saveAs(blob, `Хим вещества ${now.slice(0, 10)}.docx`);
             });
         }
 
@@ -425,7 +491,7 @@ function App() {
     return (
         <>
             <Head>
-                <title>Окно Выходной инфы</title>
+                <title>Окно Выходной информации</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>

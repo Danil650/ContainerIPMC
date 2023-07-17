@@ -8,8 +8,10 @@ const handler: NextApiHandler = async (req, res) => {
         if (Id) {
             //Поиск вещества по id
             const results = await query(
-                `SELECT substance.* FROM substance join substcont 
-                on substance.Id = substcont.SubstId where substcont.ContId = ?;`, [Id.toString()]
+                `SELECT substance.*, unit_type.Title as UnitName FROM substance join substcont 
+                on substance.Id = substcont.SubstId 
+                join unit_type on substance.UnitId = unit_type.Id
+                where substcont.ContId = ?;`, [Id.toString()]
             ) as ISubstance[];
             return res.status(200).json(results);
         }

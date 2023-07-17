@@ -10,22 +10,78 @@ const App = (router: NextRouter, Curuser?: User) => {
         Cookies.remove("user");
         router.push("/login");
     }
-    return (
-        <>
-            <nav className={styles.menuBox}>
-                <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => router.push("/")} />
-                {Curuser && Curuser.RoleId && Curuser?.RoleId < 3 ? (<><button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
-                    <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
-                    {
-                        Curuser?.RoleId == 1 ? (<button onClick={() => router.push("/usermanag")}>Управление пользователями</button>)
-                            : <></>
+    switch (Curuser?.RoleId) {
+        case 1:
+            return (<>
+                <nav className={styles.menuBox}>
+                    <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => {
+                        if (router.asPath == "/") {
+                            router.reload();
+                        }
+                        else {
+                            router.push("/")
+                        }
+
                     }
-                    <button onClick={() => router.push(`/outputdata`)}>выходная информ-ия</button></>) : <></>}
-                <button onClick={() => router.push("/manipulation")}>Взять/Вернуть хим. вещество</button>
-                <button onClick={() => ClearCookies()}>Выход</button>
-                {/* <button onClick={() => router.push("/import/")}>Импорт</button> */}
-            </nav>
-        </>
-    )
+                    } />
+                    <button onClick={() => router.push(`/turnovercontroll`)}>Контроль оборота</button>
+                    <button onClick={() => router.push(`/outputdata`)}>Вывод документов</button>
+                    <button onClick={() => router.push("/usermanag")}>Управление пользователями</button>
+                    <button onClick={() => ClearCookies()}>Выход</button>
+                    <label>{Curuser.FIO} ({Curuser.RoleName})</label>
+                </nav>
+            </>)
+            break;
+        case 2:
+            return (<>
+                <nav className={styles.menuBox}>
+                    <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => {
+                        if (router.asPath == "/") {
+                            router.reload();
+                        }
+                        else {
+                            router.push("/")
+                        }
+
+                    }
+                    } />
+                    <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
+                    <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
+                    <button onClick={() => router.push("/invoceControl")}>Управление накладными</button>
+                    <button onClick={() => router.push("/invoce")}>Накладная прибытия</button>
+                    <button onClick={() => router.push("/manipulation")}>Запросить хим. вещество</button>
+                    <button onClick={() => router.push(`/myturnover`)}>Мои запросы</button>
+                    <button onClick={() => ClearCookies()}>Выход</button>
+                    <label>{Curuser.FIO} ({Curuser.RoleName})</label>
+
+                </nav>
+            </>)
+            break;
+        case 3:
+            return (<>
+                <nav className={styles.menuBox}>
+                    <Image width={50} height={50} src={"/atom.png"} alt='Atom' onClick={() => {
+                        if (router.asPath == "/") {
+                            router.reload();
+                        }
+                        else {
+                            router.push("/")
+                        }
+
+                    }
+                    } />
+                    <button onClick={() => router.push(`/editsubst/AddSubst`)}>Добавить хим. вещество</button>
+                    <button onClick={() => router.push(`/editcont/AddCotainer`)}>Добавить контейнер</button>
+                    <button onClick={() => router.push("/manipulation")}>Запросить хим. вещество</button>
+                    <button onClick={() => router.push(`/myturnover`)}>Мои запросы</button>
+                    <button onClick={() => ClearCookies()}>Выход</button>
+                    <label>{Curuser.FIO} ({Curuser.RoleName})</label>
+
+                </nav>
+            </>)
+            break;
+        default:
+            break;
+    }
 }
 export default App;

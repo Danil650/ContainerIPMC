@@ -10,6 +10,11 @@ import { useRouter } from 'next/router';
 import Cookies from 'js-cookie'
 import User from 'lib/User';
 import Nav from 'lib/Nav';
+import { ListItemIcon, MenuItem, ThemeProvider, createTheme } from '@mui/material'
+import { MRT_Localization_RU } from 'material-react-table/locales/ru';
+import { Send, Edit } from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import Image from 'next/image';
 
 export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/parrentcontainers`);
@@ -28,7 +33,10 @@ export async function getServerSideProps(context: { req: { cookies: { [x: string
                     };
                 } else {
                     return {
-                        props: { cont, subst }, // будет передано в компонент страницы как props
+                        redirect: {
+                            destination: '/login',
+                            permanent: false
+                        }
                     };
                 }
             })
@@ -41,8 +49,11 @@ export async function getServerSideProps(context: { req: { cookies: { [x: string
 
     }
     return {
-        props: { cont, subst }, // will be passed to the page component as props
-    }
+        redirect: {
+            destination: '/login',
+            permanent: false
+        }
+    };
 }
 
 
@@ -54,16 +65,16 @@ interface Props {
 export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props) {
     const router = useRouter();
     //Показываемые контейнеры
-    const [SelectCont, setSelectCont] = useState<Container[]>(dataBd);
+    // const [SelectCont, setSelectCont] = useState<Container[]>(dataBd);
     const [ContList, setContList] = useState<Container[]>(dataBd);
     //вещества открытого контейнера
     const [SubstList, setSubstList] = useState<Substance[]>(dataBd2);
     //вещества в контейнера
     const [SubstInCont, setSubstInCont] = useState<Substance[]>([]);
-    //история посещения контейнера
-    const [HistoryCont, setSubstHist] = useState<Container[]>([]);
 
     const [Location, SetLocation] = useState<string>('');
+
+    const [CurCont, setCurCont] = useState<Container>();
     //Поиск
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -93,60 +104,98 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
         }
     }, []);
 
-    const MaterialTable = () => {
+    function MaterialTable() {
         //should be memoized or stable
-        if (Curuser && Curuser[0].RoleId && Curuser[0].RoleId < 3) {
-            const columns = useMemo<MRT_ColumnDef<Substance>[]>(
-                () => [
-                    {
-                        header: 'Редактировать',
-                        columnDefType: 'display',
-                        enableColumnOrdering: true,
-                        Cell: ({ row }) => (
-                            <button onClick={() => router.push(`/editsubst/${encodeURIComponent(SubstInCont[Number.parseInt(row.id)].Id)}`)}>
-                                Редактировать
-                            </button>
-                        ),
-                    },
-                    { accessorKey: 'SubstName', header: 'Название', },
-                    { accessorKey: 'CAS', header: 'CAS', },
-                    { accessorKey: 'Meaning', header: 'Значение', },
-                    { accessorKey: 'Mass', header: 'Масса', },
-                    { accessorKey: 'Formula', header: 'Формула', },
-                    { accessorKey: 'Investigated', header: 'Исследован', },
-                    { accessorKey: 'Left', header: 'Осталось', },
-                    {
-                        accessorKey: 'URL',
-                        header: 'Ссылка',
-                        Cell: ({ row }) => <a href={SubstInCont[Number.parseInt(row.id)].URL}>{SubstInCont[Number.parseInt(row.id)].URL}</a>,
-                    },
-                ],
-                [],
-            );
+        const darkTheme = createTheme({
+            palette: {
+                mode: 'light',
+            },
+        });
+        const columns = useMemo<MRT_ColumnDef<Substance>[]>(
+            () => [
+                { accessorKey: 'SubstName', header: 'Название', },
+                { accessorKey: 'CAS', header: 'CAS', },
+                { accessorKey: 'Meaning', header: 'Значение', },
+                // { accessorKey: 'Mass', header: 'Масса', },
+                {
+                    accessorKey: 'Mass',
+                    header: 'Масса',
+                    Cell: ({ row }) => <>{SubstInCont[Number.parseInt(row.id)].Mass} {SubstInCont[Number.parseInt(row.id)].UnitName}</>,
+                },
+                { accessorKey: 'Formula', header: 'Формула', },
+                { accessorKey: 'Investigated', header: 'Исследован', },
+                { accessorKey: 'Left', header: 'Осталось', },
+                {
+                    accessorKey: 'URL',
+                    header: 'Ссылка',
+                    Cell: ({ row }) => <a href={SubstInCont[Number.parseInt(row.id)].URL}>{SubstInCont[Number.parseInt(row.id)].URL}</a>,
+                },
+            ],
+            [],
+        );
 
-            return <MaterialReactTable columns={columns} data={SubstInCont} />;
-        }
-        else {
-            const columns = useMemo<MRT_ColumnDef<Substance>[]>(
-                () => [
-                    { accessorKey: 'SubstName', header: 'Название', },
-                    { accessorKey: 'CAS', header: 'CAS', },
-                    { accessorKey: 'Meaning', header: 'Значение', },
-                    { accessorKey: 'Mass', header: 'Масса', },
-                    { accessorKey: 'Formula', header: 'Формула', },
-                    { accessorKey: 'Investigated', header: 'Исследован', },
-                    { accessorKey: 'Left', header: 'Осталось', },
-                    {
-                        accessorKey: 'URL',
-                        header: 'Ссылка',
-                        Cell: ({ row }) => <a href={SubstInCont[Number.parseInt(row.id)].URL}>{SubstInCont[Number.parseInt(row.id)].URL}</a>,
+        return <ThemeProvider theme={createTheme(darkTheme)}>
+            <MaterialReactTable
+                columns={columns}
+                data={SubstInCont}
+                localization={MRT_Localization_RU}
+                enableRowActions
+                initialState={{ showColumnFilters: true }}
+                positionToolbarAlertBanner="bottom"
+                muiTableHeadCellProps={{
+                    sx: {
+                        fontWeight: 'normal',
+                        fontSize: '14px',
                     },
-                ],
-                [],
-            );
+                }}
+                renderRowActionMenuItems={({ closeMenu, row }) => [
+                    <MenuItem
+                        key={1}
+                        onClick={() => {
+                            closeMenu();
+                            // GetInvoce(Invoces[Number.parseInt(row.id)]);
+                            router.push(`/editsubst/${encodeURIComponent(SubstInCont[Number.parseInt(row.id)].Id)}`)
+                        }}
+                        sx={{ m: 0 }}
+                    >
+                        <ListItemIcon>
+                            <Send />
+                        </ListItemIcon>
+                        Редактировать
+                    </MenuItem>,
+                    <MenuItem
+                        key={2}
+                        onClick={() => {
+                            closeMenu();
+                            // DelFromCont
+                            DelFromCont(SubstInCont[Number.parseInt(row.id)]);
+                        }}
+                        sx={{ m: 0 }}
+                    >
+                        <ListItemIcon>
+                            <Edit />
+                        </ListItemIcon>
+                        Удалить из контейнера
+                    </MenuItem>,
+                    <MenuItem
+                        key={3}
+                        onClick={() => {
+                            closeMenu();
+                            // DelFromCont
+                            // https://pubchem.ncbi.nlm.nih.gov/#query=123
+                            window.open(`https://pubchem.ncbi.nlm.nih.gov/#query=${SubstInCont[Number.parseInt(row.id)].SubstName}`, '_blank');
+                        }}
+                        sx={{ m: 0 }}
+                    >
+                        <ListItemIcon>
+                            <SearchIcon />
+                        </ListItemIcon>
+                        Найти на PubChem
+                    </MenuItem>,
+                ]}
+            />;
+        </ThemeProvider>
 
-            return <MaterialReactTable columns={columns} data={SubstInCont} />;
-        }
 
     }
 
@@ -167,47 +216,45 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
             con: string;
             cookieValue: string;
         }
-        if (HistoryCont && HistoryCont.length != 0) {
-            if (cookieValue) {
-                let ToSnd: SendData = {
-                    sub: Id,
-                    con: Location,
-                    cookieValue: cookieValue,
-                }
-                const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/substintocont`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(ToSnd),
-                });
-                if (!response.ok) {
-                    alert("Failed to send data to API");
-                }
-                else {
-                    let newsubstlst: Substance[] = from(SubstList).where(x => x.Id !== Id).toArray() as Substance[];
-                    setSubstList(newsubstlst);
-                    fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Location}`).then(async (res) => {
-                        if (res.ok) {
-                            setSubstInCont(await res.json());
-                        }
-                    });
-                }
+
+        if (cookieValue) {
+            let ToSnd: SendData = {
+                sub: Id,
+                con: Location,
+                cookieValue: cookieValue,
             }
-        }
-        else {
-            alert("Зайдите в контейнер");
+            const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/substintocont`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(ToSnd),
+            });
+            if (!response.ok) {
+                alert("Failed to send data to API");
+            }
+            else {
+                let newsubstlst: Substance[] = from(SubstList).where(x => x.Id !== Id).toArray() as Substance[];
+                setSubstList(newsubstlst);
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Location}`).then(async (res) => {
+                    if (res.ok) {
+                        setSubstInCont(await res.json());
+                    }
+                });
+            }
         }
     }
 
     async function BuildChildrens(data: Container[], Id: string) {
         let Conts: Container[] = data;
-        const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/contid/${Id}`);
-        let dataBd: Container = await response.json();
-        setSubstHist(HistoryCont => [...HistoryCont, dataBd]);
-        // Conts = Conts.filter(x => x.Id !== Id);
+        fetch(`${process.env.NEXT_PUBLIC_URL}api/contid/${Id}`).then((response) => response.json()).then((data) => {
+            if (data && data[0]) {
+                setCurCont(data[0]);
+            }
+        });
         setContList(Conts);
     }
+
     async function OpenClickHandler(Id: string) {
         if (Id != "-1") {
             SetLocation(Id);
@@ -216,7 +263,7 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
             await BuildChildrens(data, Id);
             fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Id}`).then(async (res) => {
                 if (res.ok) {
-                    setSubstInCont(await res.json());
+                    await setSubstInCont(await res.json());
                     return;
                 }
             });
@@ -233,13 +280,45 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
         const data = await response.json();
         await setContList(data);
         SetLocation("");
-        setSubstHist([]);
         setSubstInCont([]);
+        setCurCont(undefined);
     }
 
     function EditContainer(Id: string) {
         router.push(`/editcont/${encodeURIComponent(Id)}`)
     }
+
+    async function DelFromCont(Subst: Substance) {
+        interface SndDate {
+            del: string,
+            user: string
+        }
+        let SndDate: SndDate = {
+            del: Subst.Id,
+            user: Cookies.get("user") ?? ""
+        }
+        if (confirm(`Хотите удалить ${Subst.SubstName} из контейнера?`)) {
+            await fetch(`${process.env.NEXT_PUBLIC_URL}api/delsubstfromcont`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(SndDate),
+            }).then(() => {
+                // let newsubstlst: Substance[] = from(SubstList).where(x => x.Id !== Subst).toArray() as Substance[];
+                setSubstInCont(from(SubstInCont).where(x => x.Id !== Subst.Id).toArray() as Substance[]);
+                let newsubstlst: Substance[] = [...SubstList, Subst];
+                setSubstList(newsubstlst);
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/substincont/${Location}`).then(async (res) => {
+                    if (res.ok) {
+                        setSubstInCont(await res.json());
+                    }
+                });
+            }
+            )
+        }
+    }
+
     return (
         <>
             <Head>
@@ -250,7 +329,6 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
             {
                 Curuser && Curuser[0] ? (Nav(router, Curuser[0])) : Nav(router, undefined)
             }
-
             <div className={styles.searchPanel}>
                 <input
                     type="text"
@@ -286,22 +364,16 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                     </ul>
                 )}
             </div>
-            {
-                SubstInCont && SubstInCont.length > 0 ? (
-                    <MaterialTable></MaterialTable>
-                ) : <></>
-            }
             <main className={styles.mainBox}>
                 <div className={styles.substContFree}>
                     <h1>Список Хим. веществ</h1>
                     {SubstList && SubstList.length > 0 ? (
                         SubstList.map((item) => (
                             <div key={item.Id} className={styles.containerDiv}>
-                                {HistoryCont && HistoryCont.length != 0 ? (<button onClick={() => InsetToCont(item.Id)}>Вставить</button>) : <></>}
+                                {Location && Location.length != 0 ? (<button onClick={() => InsetToCont(item.Id)}>Добавить в таблицу хим. веществ</button>) : <></>}
                                 <h1>{item.SubstName ?? "NULL"}</h1>
-                                {item.CAS ?? "NULL"}
-                                {Curuser && Curuser[0].RoleId && Curuser[0].RoleId < 3 ? (<button onClick={() => { router.push(`editsubst/${encodeURIComponent(item.Id)}`) }}>Редактировать</button>) : <></>}
-
+                                CAS: {item.CAS ?? "NULL"}
+                                <button onClick={() => { router.push(`editsubst/${encodeURIComponent(item.Id)}`) }}>Редактировать</button>
                             </div>
                         ))
                     ) : (
@@ -309,12 +381,24 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                     )}
                 </div>
                 <div className={styles.contMain}>
-                    <button className={styles.backBtn} onClick={() => GoBack()}>Вернуться</button>
+                    <button className={styles.backBtn} onClick={() => GoBack()}>На главную</button>
+
+                    <button className={styles.backBtn} onClick={() => {
+                        if (CurCont && CurCont.ContainsIn) {
+                            OpenClickHandler(CurCont.ContainsIn)
+                        }
+                        else {
+                            GoBack();
+                        }
+                    }}>Назад</button>
+                    {/* <button className={styles.backBtn} onClick={() => GoBackOne()}>Назад</button>  */}
                     <h1>Список контейнеров</h1>
+                    {CurCont ? (<label>Место нахождение: {CurCont.ContainsInName ?? ""}/{CurCont.Name}</label>) : <></>}
+
                     <select onChange={(e) => OpenClickHandler(e.target.value)}>
                         <option value={-1}>---Главные контейнеры---</option>
-                        {SelectCont && SelectCont.length > 0 ? (
-                            SelectCont?.map((item) => {
+                        {ContList && ContList.length > 0 ? (
+                            ContList?.map((item) => {
                                 let DateCreate = ""
                                 if (item.DateCreate) {
                                     DateCreate = `Создан в ${new Date(item.DateCreate).toLocaleDateString()}`;
@@ -326,16 +410,23 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                                 );
                             })
                         ) : (
-                            <option>---</option>
+                            <></>
                         )}
                     </select>
                     {ContList && ContList.length > 0 ?
                         (ContList?.map((item) => {
                             return (
                                 <div key={item.Id} className={styles.containerDiv}>
-                                    <button onClick={() => OpenClickHandler(item.Id)}>Показать содержимое</button>
+                                    <Image
+                                        onClick={() => OpenClickHandler(item.Id)}
+                                        src="/box.svg"
+                                        width={75}
+                                        className={styles.Image}
+                                        height={75}
+                                        alt="Open Container"
+                                    />
                                     <h1>{item.Name ?? "NULL"} <u>|содержит {item.ContQauntIn} контейнеров</u></h1>
-                                    {Curuser && Curuser[0].RoleId && Curuser[0].RoleId < 3 ? (<button onClick={() => EditContainer(item.Id)}>Редактировать</button>) : <></>}
+                                    <button onClick={() => EditContainer(item.Id)}>Редактировать</button>
                                 </div>
                             );
                         })) :
@@ -343,7 +434,12 @@ export default function Home({ cont: dataBd, subst: dataBd2, CurUserBd }: Props)
                         )
                     }
                 </div>
-            </main>
+
+            </main >
+            <h1 className={styles.TableText}>Таблица хим. веществ</h1>
+            {
+                <MaterialTable></MaterialTable>
+            }
         </>
     );
 }

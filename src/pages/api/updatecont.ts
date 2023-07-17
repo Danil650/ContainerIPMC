@@ -13,9 +13,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (data.cont.Name && data.cont.Name != "") {
             if (data.cont.Id != "0") {
                 try {
-                    await query(`UPDATE containerdb.contwthcont SET \`Name\` = ? WHERE Id = ?;`, [data.cont.Name, data.cont.Id]);
-                    res.status(200).json({ success: true });
-
+                    const SearchName = `%${data.cont.Name}%`
+                    const ContainertNameQuery = await query(`SELECT * FROM containerdb.contwthcont where Name like ? && Id != ?;`, [SearchName, data.cont.Id]);
+                    const ContainerNameRep: Container[] = ContainertNameQuery as Container[];
+                    if (ContainerNameRep.length == 0) {
+                        await query(`UPDATE containerdb.contwthcont SET \`Name\` = ? WHERE Id = ?;`, [data.cont.Name, data.cont.Id]);
+                        res.status(200).json({ success: true });
+                    }
+                    else {
+                        const NewName = `${data.cont.Name}(${ContainerNameRep.length + 1})`;
+                        await query(`UPDATE containerdb.contwthcont SET \`Name\` = ? WHERE Id = ?;`, [NewName, data.cont.Id]);
+                        res.status(200).json({ success: true });
+                    }
                 } catch (error) {
                     console.error(error);
                     res.status(500).json({ success: false, error: "Internal server error" });
@@ -23,12 +32,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             else {
                 try {
-                    const now = new Date().toISOString().slice(0, 10).replace('T', ' ');
-                    await query(
-                        `INSERT INTO containerdb.contwthcont (Id, ExcelId, ContainsIn, \`Name\`, DateCreate) 
-                        VALUES (?, ?, ?, ?, ?);`, [uuid(), data.cont.ExcelId, data.cont.ContainsIn ?? "", data.cont.Name, now ]
-                    )
-                    res.status(200).json({ success: true });
+                    const SearchName = `%${data.cont.Name}%`
+                    const ContainertNameQuery = await query(`SELECT * FROM containerdb.contwthcont where Name like ? && Id != ?;`, [SearchName, data.cont.Id]);
+                    const ContainerNameRep: Container[] = ContainertNameQuery as Container[];
+                    if (ContainerNameRep.length == 0) {
+                        await query(
+                            `INSERT INTO containerdb.contwthcont (Id, ContainsIn, \`Name\`, DateCreate) 
+                            VALUES (?, ?, ?, now());`, [uuid(), data.cont.ContainsIn ?? "", data.cont.Name]
+                        )
+                        res.status(200).json({ success: true });
+                    }
+                    else {
+                        const NewName = `${data.cont.Name}(${ContainerNameRep.length + 1})`;
+                        await query(
+                            `INSERT INTO containerdb.contwthcont (Id, ContainsIn, \`Name\`, DateCreate) 
+                            VALUES (?, ?, ?, now());`, [uuid(), data.cont.ContainsIn ?? "", NewName]
+                        )
+                        res.status(200).json({ success: true });
+                    }
+
+
                 } catch (error) {
                     console.error(error);
                     res.status(500).json({ success: false, error: "Internal server error" });

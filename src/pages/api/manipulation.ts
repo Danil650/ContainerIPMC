@@ -14,10 +14,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             User: User,
             Action: string,
             Mass: number
+            RequestText: string,
         };
         //Забрал -1 Вернул 1 
         const data = req.body as SndData;
-
         if (data.Action == "-1") {
             data.Action = "1";
         }
@@ -31,28 +31,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const First: Decimal = new Decimal(Subst.Mass.toString());
             const Second: Decimal = new Decimal(data.subst.Mass.toString());
             const Res: Decimal = First.minus(Second);
-            console.log(First, Second);
+            const UID = uuid();
+
             if (!Res.isNegative()) {
                 await db.transaction()
-                    .query(`INSERT INTO containerdb.subst_turnover (Idturnover, UserId, ActionId, SubstId, MassCount, DateTurnover)
+                    .query(`INSERT INTO containerdb.subst_turnover
+                    (Idturnover,
+                    UserId,
+                    ActionId,
+                    SubstId,
+                    MassCount)
                     VALUES
                     (?,
                     ?,
                     ?,
                     ?,
+                    ?);                    
+                    `, [UID, data.User.IdUsers, data.Action, data.subst.Id, data.Mass.toString()])
+                    .query(`INSERT INTO containerdb.turnove_request
+                    (IdRequest,
+                    TurnoverId,
+                    UserIdReq,
+                    ReqDate,
+                    StatusId,
+                    RequestText)
+                    VALUES
+                    (?,
                     ?,
-                    NOW());
-                    `, [uuid(), data.User.IdUsers, data.Action, data.subst.Id, data.Mass.toString()])
-                    .query(`UPDATE containerdb.substance
-                    SET
-                    Mass =?
-                    WHERE Id = ?;`, [data.subst.Mass.toString(), data.subst.Id])
-                    .rollback((e: any) => { return res.status(300).json("Ошибка транзакции"); }) // optional
+                    ?,
+                    now(),
+                    '1',
+                    ?);`, [uuid(), UID, data.User.IdUsers, data.RequestText])
+                    .rollback((e: any) => {
+                        console.log(e.message)
+                        return res.status(300).json("Ошибка транзакции");
+                    }) // optional
                     .commit(); // execute the queries
                 return res.status(200).json("Ok");
             }
+            else {
+                return res.status(300).json("Отрицательное значение");
+
+            }
         }
         else {
+            const UID = uuid();
             await db.transaction()
                 .query(`INSERT INTO containerdb.subst_turnover (Idturnover, UserId, ActionId, SubstId, MassCount)
                     VALUES
@@ -61,12 +84,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ?,
                     ?,
                     ?);
-                    `, [uuid(), data.User.IdUsers, data.Action, data.subst.Id, data.Mass.toString()])
-                .query(`UPDATE containerdb.substance
-                    SET
-                    Mass =?
-                    WHERE Id = ?;`, [data.subst.Mass.toString(), data.subst.Id])
-                .rollback((e: any) => { return res.status(300).json("Ошибка транзакции"); }) // optional
+                    `, [UID, data.User.IdUsers, data.Action, data.subst.Id, data.Mass.toString()])
+                .query(`INSERT INTO containerdb.turnove_request
+                    (IdRequest,
+                    TurnoverId,
+                    UserIdReq,
+                    ReqDate,
+                    StatusId,
+                    RequestText)
+                    VALUES
+                    (?,
+                    ?,
+                    ?,
+                    now(),
+                    '1',
+                    ?);`, [uuid(), UID, data.User.IdUsers, data.RequestText])
+                .rollback((e: any) => {
+                    console.log(e.message)
+                    return res.status(300).json("Ошибка транзакции");
+                }) // optional
                 .commit(); // execute the queries
             return res.status(200).json("Ok");
         }

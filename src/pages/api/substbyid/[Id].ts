@@ -8,14 +8,16 @@ const handler: NextApiHandler = async (req, res) => {
         if (Id) {
             //Поиск вещества по id
             const results = await query(
-                `SELECT * FROM 
-            containerdb.substance
-            Where id = ? ;`, [Id.toString()]
+                `SELECT substance.*, unit_type.Title AS UnitName FROM 
+                containerdb.substance
+                JOIN unit_type on unit_type.Id = substance.UnitId
+                Where substance.id = ? ;`, [Id.toString()]
             ) as ISubstance[];
 
             if (results.length > 0) {
                 return res.json(results);
             } else {
+                
                 res.status(404).send('Substances not found');
             }
         }

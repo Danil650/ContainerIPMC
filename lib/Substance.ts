@@ -5,6 +5,7 @@ export default interface Substance {
     Meaning?: string,
     Mass: Number,
     UnitId: number
+    UnitName?: string,
     Formula?: string,
     Investigated: string,
     Left: string,

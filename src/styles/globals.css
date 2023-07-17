@@ -1,19 +1,32 @@
-body
-{
+body {
     margin: 0;
-    background-color:#47ada1;
-    font-family: 'Times New Roman', Times, serif;
+    font-size: 18px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+input {
     font-size: 20px;
 }
-input{
-    font-size: 18px;
-}
-button{
-    background-color: #f8feaf;
-    font-size: large;
+
+button {
+    background-color: #adc5ff;
+    font-size: 20px;
     margin: 5px;
 }
 
-button:hover{
-    background-color: #e0feaf;
+button:hover {
+    background-color: #d6dff5;
+}
+
+select {
+    font-size: 20px;
+}
+
+label {
+    font-size: 28px;
+}
+
+textarea {
+    font-size: 20px;
+
 }

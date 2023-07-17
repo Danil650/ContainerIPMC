@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import styles from '../styles/Home.module.css';
 import User from "../../lib/User";
 import React from 'react';
-import Cookies from 'js-cookie';
 import Head from 'next/head';
-import Image from 'next/image';
-import Substance from 'lib/Substance';
 import Nav from 'lib/Nav';
 import Role from 'lib/Role';
 
@@ -20,25 +17,47 @@ export async function getServerSideProps(context: { req: { cookies: { [x: string
             .then((data) => {
                 if (data && data.length !== 0) {
                     let CurUserBd: User[] = data;
-                    return {
-                        props: { Role, CurUserBd }, // будет передано в компонент страницы как props
-                    };
+                    if (CurUserBd[0].RoleId != 1) {
+                        return {
+                            redirect: {
+                                destination: '/',
+                                permanent: false
+                            }
+                        };
+                    }
+                    else {
+                        return {
+                            props: { Role, CurUserBd }, // будет передано в компонент страницы как props
+                        };
+                    }
+
                 } else {
                     return {
-                        props: { Role }, // будет передано в компонент страницы как props
+                        redirect: {
+                            destination: '/',
+                            permanent: false
+                        }
                     };
                 }
             })
             .catch((error) => {
                 console.error('Error fetching CurUserBd:', error);
                 return {
-                    props: { Role }, // будет передано в компонент страницы как props
+                    redirect: {
+                        destination: '/',
+                        permanent: false
+                    }
                 };
             });
 
     }
-    return {
-        props: { Role }, // will be passed to the page component as props
+    else {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        };
     }
 }
 interface getServerSideProps {
@@ -58,42 +77,53 @@ function App({ Role, CurUserBd }: getServerSideProps) {
     const [SelUserEdit, setSelUserEdit] = useState("");
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_URL}api/usersall`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(Curuser),
-        })
-            .then((res) => {
-                if (res.ok) {
-                    return res.json();
-                }
+        if (Curuser && Curuser[0].RoleId == 1) {
+            fetch(`${process.env.NEXT_PUBLIC_URL}api/usersall`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(Curuser),
             })
-            .then((data) => {
-                setUser(data);
-            })
-            .catch((error) => {
-                console.error("Ошибка получения данных: ", error);
-            });
+                .then(async (res) => await res.json()
+                )
+                .then(data => {
+                    const CurUserDate: User = data[0];
+                    if (CurUserDate.RoleId != 1) {
+                        router.push("/");
+                    }
+                    else {
+                        setUser(data);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Ошибка получения данных: ", error);
+                    router.push("/");
+
+                });
+        }
+        else {
+            router.push("/");
+        }
+
     }, [Curuser]);
     function MainWindow() {
         switch (Action) {
             case "1":
                 return (<>
-                    <label>Логие</label>
-                    <input onChange={(e) => { setLogin(e.target.value) }}></input>
+                    <label>Логин</label>
+                    <input autoComplete="off" onChange={(e) => { setLogin(e.target.value) }}></input>
                     <label>Пароль</label>
-                    <input type='password' onChange={(e) => { setPasw(e.target.value) }}></input>
+                    <input autoComplete="off" onChange={(e) => { setPasw(e.target.value) }}></input>
                     <label>ФИО</label>
                     <input onChange={(e) => { setFIO(e.target.value) }}></input>
                     <label>Роль</label>
                     <select onChange={(e) => { setRoleId(e.target.value) }}>
                         {Roles.map((item) => {
-                            return (<option key={item.IdRole}>{item.Title}</option>);
+                            return (<option key={item.IdRole} value={item.IdRole}>{item.Title}</option>);
                         })}
                     </select>
-                    <button onClick={() => CreateUser()}>Добавть пользователя</button>
+                    <button onClick={() => CreateUser()}>Добавить пользователя</button>
                 </>);
                 break;
             case "2":
@@ -133,7 +163,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
                 Login: Login.trim(),
                 Password: Pasw.trim(),
                 RoleId: Number(RoleId),
-                FIO: FIO.trim()
+                FIO: FIO.trim(),
             };
 
             interface SndData {
@@ -172,7 +202,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
 
         }
         else {
-            alert("Заполните все поля");
+            alert("Заполните необходимые поля");
         }
     }
 
@@ -181,7 +211,7 @@ function App({ Role, CurUserBd }: getServerSideProps) {
             router.push(`/edituser/${SelUserEdit}`);
         }
         else {
-            alert("Выбирите пользователя");
+            alert("Выберите пользователя");
         }
     }
 

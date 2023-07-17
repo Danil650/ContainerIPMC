@@ -10,43 +10,81 @@ import Substance from 'lib/Substance';
 import Nav from 'lib/Nav';
 import Role from 'lib/Role';
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: { req: { cookies: { [x: string]: any; }; }; }) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_URL}api/roles`);
     let Role = await response.json();
-    return {
-        props: { Role }
+    if (context.req.cookies["user"]) {
+        console.log(context.req.cookies["user"]);
+        return fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${context.req.cookies["user"]}`)
+            .then(async (res) => await res.json())
+            .then((data) => {
+                if (data && data.length !== 0) {
+                    let CurUserBd: User[] = data;
+                    if (CurUserBd[0].RoleId != 1) {
+                        return {
+                            redirect: {
+                                destination: '/',
+                                permanent: false
+                            }
+                        };
+                    }
+                    else {
+                        return {
+                            props: { Role, CurUserBd }, // будет передано в компонент страницы как props
+                        };
+                    }
+
+                } else {
+                    return {
+                        redirect: {
+                            destination: '/',
+                            permanent: false
+                        }
+                    };
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching CurUserBd:', error);
+                return {
+                    redirect: {
+                        destination: '/',
+                        permanent: false
+                    }
+                };
+            });
+
+    }
+    else {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        };
     }
 }
 interface getServerSideProps {
-    Role: Role[]
+    Role: Role[],
+    CurUserBd: User[]
 }
-function App({ Role }: getServerSideProps) {
+function App({ Role, CurUserBd }: getServerSideProps) {
 
     const router = useRouter();
     const { Id } = router.query;
-    const [Curuser, setCuruser] = useState<User[]>();
+    const [Curuser, setCuruser] = useState<User[]>(CurUserBd);
     const [Login, setLogin] = useState("");
     const [Pasw, setPasw] = useState("");
     const [FIO, setFIO] = useState("");
     const [RoleId, setRoleId] = useState("1");
     const [Roles, _] = useState<Role[]>(Role);
+    const [ChangePasw, setChangePasw] = useState(false);
 
     useEffect(() => {
-        if (!Cookies.get("user")) {
-            router.push("/login");
+        if (Curuser && Curuser[0].RoleId == 1) {
+
         }
         else {
-            fetch(`${process.env.NEXT_PUBLIC_URL}api/checkuser/${Cookies.get("user")}`)
-                .then(async res => await res.json())
-                .then(data => {
-                    if (data.length == 0) {
-                        router.push("/login");
-                        Cookies.remove("user");
-                    }
-                    else {
-                        setCuruser(data);
-                    }
-                });
+            router.push("/");
         }
     }, []);
     useEffect(() => {
@@ -84,52 +122,101 @@ function App({ Role }: getServerSideProps) {
         }
     }, [Id])
     function EditUser() {
-        if (Login.trim().length > 0 && Pasw.trim().length > 0 && FIO.trim().length > 0 && RoleId && Curuser && Id) {
-            //updateuser
-            interface SndData {
-                CurUser: User,
-                UserUpdate: User
-            };
+        if (ChangePasw) {
+            if (Login.trim().length > 0 && Pasw.trim().length > 0 && FIO.trim().length > 0 && RoleId && Curuser && Id) {
+                //updateuser
+                interface SndData {
+                    CurUser: User,
+                    UserUpdate: User
+                };
 
-            const UserUpd: User = {
-                IdUsers: Id[0],
-                Login: Login.trim(),
-                Password: Pasw.trim(),
-                RoleId: Number(RoleId),
-                FIO: FIO
-            };
+                const UserUpd: User = {
+                    IdUsers: Id[0],
+                    Login: Login.trim(),
+                    Password: Pasw.trim(),
+                    RoleId: Number(RoleId),
+                    FIO: FIO
+                };
 
-            const sndData : SndData = {
-                CurUser: Curuser[0],
-                UserUpdate: UserUpd
+                const sndData: SndData = {
+                    CurUser: Curuser[0],
+                    UserUpdate: UserUpd
+                }
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updateuser`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(sndData),
+                })
+                    .then((res) => {
+                        if (res.ok) {
+                            return res.json();
+                        }
+                    })
+                    .then((data) => {
+                        if (data[0] == "ok") {
+                            alert("Пользователь изменен");
+                            router.push("/");
+                        }
+                        else {
+                            alert(data);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Ошибка получения данных: ", error);
+                        router.push("/")
+                    });
             }
-            fetch(`${process.env.NEXT_PUBLIC_URL}api/updateuser`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(sndData),
-            })
-                .then((res) => {
-                    if (res.ok) {
-                        return res.json();
-                    }
-                })
-                .then((data) => {
-                    if (data[0] ==  "ok") {
-                        alert("Пользователь изменен");
-                        router.push("/");
-                    }
-                    else
-                    {
-                        alert(data);
-                    }
-                })
-                .catch((error) => {
-                    console.error("Ошибка получения данных: ", error);
-                    router.push("/")
-                });
         }
+        else {
+            if (Login.trim().length > 0 && FIO.trim().length > 0 && RoleId && Curuser && Id) {
+                //updateuser
+                interface SndData {
+                    CurUser: User,
+                    UserUpdate: User
+                };
+
+                const UserUpd: User = {
+                    IdUsers: Id[0],
+                    Login: Login.trim(),
+                    Password: "",
+                    RoleId: Number(RoleId),
+                    FIO: FIO
+                };
+
+                const sndData: SndData = {
+                    CurUser: Curuser[0],
+                    UserUpdate: UserUpd
+                }
+                fetch(`${process.env.NEXT_PUBLIC_URL}api/updateuser`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(sndData),
+                })
+                    .then((res) => {
+                        if (res.ok) {
+                            return res.json();
+                        }
+                    })
+                    .then((data) => {
+                        if (data[0] == "ok") {
+                            alert("Пользователь изменен");
+                            router.push("/");
+                        }
+                        else {
+                            alert(data);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Ошибка получения данных: ", error);
+                        router.push("/")
+                    });
+            }
+        }
+
     }
 
 
@@ -144,16 +231,17 @@ function App({ Role }: getServerSideProps) {
                 Curuser && Curuser[0] ? (Nav(router, Curuser[0])) : Nav(router, undefined)
             }
             <div className={styles.ManagMenu}>
-                <label>Логие</label>
+                <label>Логин</label>
                 <input defaultValue={Login} onChange={(e) => { setLogin(e.target.value) }}></input>
                 <label>Пароль</label>
                 <input defaultValue={Pasw} type='password' onChange={(e) => { setPasw(e.target.value) }}></input>
+                <label>Изменять пароль <input type="checkbox" checked={ChangePasw} onChange={(e) => setChangePasw(e.target.checked)}></input></label>
                 <label>ФИО</label>
                 <input defaultValue={FIO} onChange={(e) => { setFIO(e.target.value) }}></input>
                 <label>Роль</label>
                 <select defaultValue={RoleId} onChange={(e) => { setRoleId(e.target.value) }}>
                     {Roles.map((item) => {
-                        return (<option key={item.IdRole}>{item.Title}</option>);
+                        return (<option value={item.IdRole} key={item.IdRole}>{item.Title}</option>);
                     })}
                 </select>
                 <button onClick={() => EditUser()}>Редактировать пользователя</button>

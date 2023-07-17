@@ -1,0 +1,21 @@
+export default interface TurnoveRequest {
+    Idturnover: string,
+    UserId: string,
+    ActionId: string,
+    SubstId: string,
+    MassCount: number,
+    ActionTitle: string,
+    IdRequest: string,
+    UserIdReq: string,
+    UserAcceptReq?: string,
+    ReqDate: string,
+    StatusId: string,
+    RequestText: string,
+    UserReqFIO: string,
+    UserAcceptFIO?: string
+    SubstName: string,
+    Mass: string,
+    StatusTitle: string,
+    Result?: string,
+    UnitTitle: string,
+}

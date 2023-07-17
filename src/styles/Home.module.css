@@ -4,9 +4,14 @@
   padding: 5px;
   align-items: center;
   justify-content: space-around;
-  border: solid;
+  border: 1px solid black;
+  background: #a2aad6;
 }
-
+.menuBox button
+{
+  padding: 20px;
+  font-weight: bold;
+}
 .menuBox img:hover{
   cursor: pointer;
 }
@@ -15,35 +20,40 @@
   margin: 0;
   padding: 0;
   height: max-content;
-  background-color: #47ad9f;
+  background-color: #828aa3;
   display: flex;
-  justify-content:space-around;
+  justify-content: space-around;
 
 }
-
+.mainBox *{
+  margin-left: 5px;
+}
 .mainBox div
 {
   display: flex;
   flex-direction: column;
-  border: solid;
+  border: 1px solid black;
   margin: 10px;
-  height: max-content;
-  background-color: #079199;
+  /* height: max-content; */
+  background-color: #a5aedd;
 }
 
 .substContFree
 {
   width: 30vw;
-  border: solid;
+  border: 1px solid black;
   padding: 10px;
+  overflow-y: scroll;
+  height: 60vh;
 }
 
 .contMain
 {
   width: 70vw;
-  border: solid;
+  border: 1px solid black;
   padding: 10px;
-  height: max-content;
+  overflow-y: scroll;
+  height: 60vh;
 }
 .contMain select
 {
@@ -57,48 +67,52 @@
   display: flex;
   padding-right: 5px;
 }
-
 .edit{
-  margin-top: 20vh;
-}
-
-.edit div {
-  display: flex;
+  margin-top: 5vh;
   align-items: center;
-  font-size: 24px;
-  margin-top: 10px;
+  display: flex;
   flex-direction: column;
 }
-
+.edit *{
+  display: block;
+  width: 25vw;
+  overflow: hidden;
+  padding: 0;
+  margin: 0 0 5.5px 0;
+}
 .edit button {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
-  margin-left: 47%;
   margin-top: 10px;
 }
 
 .edit label {
   margin-right: 10px;
 }
-
+.labelcheckbox {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: baseline;
+  flex-direction: row;
+}
 .edit input {
   margin-right: 10px;
 }
-
+.edit .checkbox  {
+  display: block;
+  width: auto;
+}
 .searchPanel {
   position: relative;
   display: inline-block;
   margin: 10px;
-  font-size: 16px;
 }
 
 .searchPanel ul {
-  border: solid;
+  border: 1px solid black;
   padding: 5px;
 }
-
 .searchPanel div {
   display: flex;
   align-items: center;
@@ -106,25 +120,34 @@
 
 .backBtn {
   padding: 10px;
-  background-color: #D9E16F;
 }
 
 .import {
-  width: 250px;
-  height: 250px;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  margin: auto;    
-  display: flex;
-  flex-direction: column;
+    /* width: 418px; */
+    height: 250px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+.import *{
+  /* width: 418px; */
+  font-size: 35px;
+  height: 12vh;
 }
 
+.AutoMass {
+  height: auto;
+}
 .SpecSelect{
   display: flex;
   justify-content: center;
+  margin-top: 2vh;
+  margin-left: 10px;
 }
 
 .ManagMenu {
@@ -138,4 +161,23 @@
 
 .ManagMenu * {
 width: 50%;
+}
+
+.ReqText {
+  height: 20vh;
+  resize: none;
+}
+
+.ReqBox {
+  display: grid;
+  height: 80vh;
+  align-content: stretch;
+}
+
+.Image:hover{
+  cursor: pointer;
+}
+
+.TableText{
+  margin-left: 5px;
 }
